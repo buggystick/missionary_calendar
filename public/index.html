@@ -9,20 +9,52 @@
             font-family: Arial, sans-serif;
             padding: 1em;
         }
-        h1, h2 {
+        h1 {
             text-align: center;
         }
+
+        /* Example Banner (previously “unused”) */
+        .information-banner {
+            background: #fffbcc;
+            border: 1px solid #e2dfb2;
+            padding: 1em;
+            margin-bottom: 1em;
+            text-align: center;
+            font-weight: bold;
+        }
+
         .qr-code {
             text-align: center;
             margin: 1em 0;
         }
+
+        .month-nav {
+            text-align: center;
+            margin: 1em 0;
+        }
+
+        .month-nav button {
+            padding: 0.5em 1em;
+            margin: 0 1em;
+            cursor: pointer;
+            border: none;
+            background: #4CAF50;
+            color: #fff;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        /* “Secondary” style for an extra button */
+        .month-nav button.secondary {
+            background: #999;
+            color: #fff;
+        }
+
         .calendar-container {
             display: flex;
-            flex-wrap: wrap;
-            justify-content: space-around;
-            gap: 2em;
+            justify-content: center;
             margin: 0 auto;
-            max-width: 1200px;
+            max-width: 600px;
         }
         .month {
             width: 360px;
@@ -45,7 +77,6 @@
         th, td {
             border: 1px solid #ccc;
             padding: 8px;
-            cursor: pointer;
             vertical-align: top;
             height: 60px;
             position: relative;
@@ -53,15 +84,32 @@
         th {
             background: #f9f9f9;
         }
-        td:hover {
+
+        /* Hover effect on future days */
+        td:hover:not(.past-day) {
             background: #f0f8ff;
+            cursor: pointer;
         }
+
+        /* Past day (disabled) */
+        .past-day {
+            background: #eee;
+            color: #999;
+            cursor: not-allowed !important;
+        }
+
+        /* Highlight certain days (Sundays in our example) */
+        .highlight-day {
+            background-color: #ffc;
+        }
+
         .sign-up-info {
             font-size: 0.9em;
             color: #333;
             margin-top: 4px;
             display: block;
         }
+
         /* Modal overlay */
         .modal-overlay {
             display: none;
@@ -75,6 +123,7 @@
             justify-content: center;
             z-index: 1000;
         }
+
         /* Modal box */
         .modal {
             background: #fff;
@@ -83,22 +132,34 @@
             max-width: 400px;
             width: 80%;
         }
+
+        /* Wrap content in an additional .modal-content class */
+        .modal-content {
+            background: #fafafa;
+            padding: 1em;
+            border-radius: 4px;
+        }
+
         .modal h3 {
             margin-top: 0;
         }
+
         .modal label {
             display: block;
             margin: 10px 0 5px;
         }
+
         .modal input {
             width: 100%;
             padding: 8px;
             box-sizing: border-box;
             margin-bottom: 10px;
         }
+
         .modal-buttons {
             text-align: right;
         }
+
         .modal-buttons button {
             margin-left: 10px;
             padding: 8px 12px;
@@ -106,6 +167,7 @@
             cursor: pointer;
             border-radius: 4px;
         }
+
         .close-btn {
             background-color: #ccc;
         }
@@ -121,17 +183,27 @@
 </head>
 <body>
 
+<!-- Example of a banner using the .information-banner class -->
+<!--<div class="information-banner">-->
+<!--    Important Note: You can sign up to feed the missionaries on any future date. Past dates are not available.-->
+<!--</div>-->
+
 <h1>Missionary Meal Calendar</h1>
 <p style="text-align:center;">
     Scan the QR code or visit <strong>YOUR_DOMAIN</strong> to sign up!
 </p>
 
+<!-- Replace YOUR_DOMAIN below with your actual deployed URL -->
 <div class="qr-code">
-    <!-- Replace `YOUR_DOMAIN` with your real URL (https://example.com) -->
     <img
             src="https://chart.googleapis.com/chart?chs=200x200&cht=qr&chl=https://YOUR_DOMAIN"
             alt="Scan to Sign Up"
     />
+</div>
+
+<div class="month-nav">
+    <!-- Default show the current month; toggle to next month with this button -->
+    <button id="nextMonthBtn">Next Month »</button>
 </div>
 
 <div class="calendar-container" id="calendarContainer"></div>
@@ -139,103 +211,175 @@
 <!-- Modal for sign-up form -->
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal">
-        <h3 id="modalDateTitle">Sign Up for <span id="modalDate"></span></h3>
-        <label for="nameInput">Your Name</label>
-        <input type="text" id="nameInput" placeholder="Enter your name" />
+        <div class="modal-content">
+            <h3 id="modalDateTitle">
+                Sign Up for <span id="modalDate"></span>
+            </h3>
+            <label for="nameInput">Your Name</label>
+            <input type="text" id="nameInput" placeholder="Enter your name" />
 
-        <label for="phoneInput">Phone Number</label>
-        <input type="text" id="phoneInput" placeholder="(555) 555-5555" />
+            <label for="phoneInput">Phone Number</label>
+            <input type="text" id="phoneInput" placeholder="(555) 555-5555" />
 
-        <div class="modal-buttons">
-            <button class="delete-btn" id="deleteBtn">Clear</button>
-            <button class="close-btn" id="closeBtn">Cancel</button>
-            <button class="save-btn" id="saveBtn">Save</button>
+            <div class="modal-buttons">
+                <button class="delete-btn" id="deleteBtn">Clear</button>
+                <button class="close-btn" id="closeBtn">Cancel</button>
+                <button class="save-btn" id="saveBtn">Save</button>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-    // We'll fetch sign-ups from the server, store them here in an object:
-    // signups = { "2025-3-15": { name: "John", phone: "555-5555" } }
+    // signups = { "YYYY-M-D": { name, phone }, ... }
     let signups = {};
 
-    // Utility functions
-    function getFirstDayOfMonth(year, month) {
-        return new Date(year, month, 1).getDay(); // 0=Sunday,1=Mon,2=Tue...
-    }
-    function getDaysInMonth(year, month) {
-        return new Date(year, month + 1, 0).getDate();
+    // Track which month is displayed
+    let displayedYear;
+    let displayedMonth;
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const today = new Date();
+        displayedYear = today.getFullYear();
+        displayedMonth = today.getMonth();
+
+        fetchSignups().then(() => {
+            refreshCalendar();
+        });
+
+        // NEXT MONTH button toggles current vs. next month
+        document.getElementById('nextMonthBtn').addEventListener('click', () => {
+            const currentDate = new Date();
+            const currentMonthIndex = currentDate.getMonth();
+            const currentYearIndex = currentDate.getFullYear();
+
+            // If currently showing today's month, go next
+            if (displayedYear === currentYearIndex && displayedMonth === currentMonthIndex) {
+                displayedMonth++;
+                if (displayedMonth > 11) {
+                    displayedMonth = 0;
+                    displayedYear++;
+                }
+                document.getElementById('nextMonthBtn').textContent = '« Current Month';
+            } else {
+                // Otherwise, go back to current month
+                displayedYear = currentYearIndex;
+                displayedMonth = currentMonthIndex;
+                document.getElementById('nextMonthBtn').textContent = 'Next Month »';
+            }
+            refreshCalendar();
+        });
+    });
+
+    // Fetch signups from server
+    function fetchSignups() {
+        return fetch('/api/signups')
+            .then(res => res.json())
+            .then(data => {
+                signups = data;
+            })
+            .catch(err => console.error(err));
     }
 
-    // Build a calendar table for a specific month/year
+    // Build or rebuild the calendar
+    function refreshCalendar() {
+        const container = document.getElementById('calendarContainer');
+        container.innerHTML = ''; // Clear existing
+
+        const monthDiv = buildCalendar(displayedYear, displayedMonth);
+        container.appendChild(monthDiv);
+    }
+
     function buildCalendar(year, month) {
         const monthName = new Date(year, month, 1).toLocaleString('default', { month: 'long' });
         const daysInMonth = getDaysInMonth(year, month);
-        const firstDay = getFirstDayOfMonth(year, month); // Sunday=0
+        const firstDay = getFirstDayOfMonth(year, month);
 
-        let table = document.createElement('table');
+        // Table for this month
+        const table = document.createElement('table');
 
-        // Table Header (days of week)
-        let thead = document.createElement('thead');
-        let headerRow = document.createElement('tr');
-        let weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        // Header row with days of week
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
         weekdays.forEach(day => {
-            let th = document.createElement('th');
+            const th = document.createElement('th');
             th.textContent = day;
             headerRow.appendChild(th);
         });
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
-        // Table Body
-        let tbody = document.createElement('tbody');
+        // Table body with day cells
+        const tbody = document.createElement('tbody');
         let currentDay = 1;
         let row = document.createElement('tr');
 
-        // Fill blank cells before first day
+        // Fill empty cells before first day
         for (let i = 0; i < firstDay; i++) {
             let emptyCell = document.createElement('td');
             row.appendChild(emptyCell);
         }
 
-        // Fill the rest of the days
+        // For disabling past dates
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Populate days
         for (; currentDay <= daysInMonth; currentDay++) {
             if (row.children.length === 7) {
                 tbody.appendChild(row);
                 row = document.createElement('tr');
             }
-            let dayCell = document.createElement('td');
-            const dateKey = `${year}-${month+1}-${currentDay}`;
-            dayCell.setAttribute('data-date', dateKey);
+
+            const dayCell = document.createElement('td');
+            const dateKey = `${year}-${month + 1}-${currentDay}`;
             dayCell.textContent = currentDay;
 
-            // If there's sign-up info from the server, display it
+            // Figure out if this day is Sunday (highlight example)
+            const cellDate = new Date(year, month, currentDay);
+            const dayOfWeek = cellDate.getDay(); // 0=Sunday, 1=Monday, etc.
+
+            // We highlight Sundays to use .highlight-day
+            if (dayOfWeek === 0) {
+                dayCell.classList.add('highlight-day');
+            }
+
+            // Grey out if in the past
+            cellDate.setHours(0, 0, 0, 0);
+            if (cellDate < today) {
+                dayCell.classList.add('past-day');
+            } else {
+                // Future or current day: clickable
+                dayCell.setAttribute('data-date', dateKey);
+                // Properly use the event parameter (e) to avoid “unused parameter” warnings
+                dayCell.addEventListener('click', (e) => handleCellClick(e));
+            }
+
+            // If there's signup info, show it
             if (signups[dateKey]) {
-                let infoSpan = document.createElement('span');
+                const infoSpan = document.createElement('span');
                 infoSpan.classList.add('sign-up-info');
-                infoSpan.textContent = signups[dateKey].name + ' (' + signups[dateKey].phone + ')';
+                infoSpan.textContent = `${signups[dateKey].name} (${signups[dateKey].phone})`;
                 dayCell.appendChild(infoSpan);
             }
 
-            // Click to open modal
-            dayCell.addEventListener('click', handleCellClick);
             row.appendChild(dayCell);
         }
 
-        // Fill remaining cells if row isn't complete
+        // Fill remaining cells in last row
         while (row.children.length < 7) {
             let emptyCell = document.createElement('td');
             row.appendChild(emptyCell);
         }
-
         tbody.appendChild(row);
         table.appendChild(tbody);
 
         // Wrap table in a .month div
-        let monthDiv = document.createElement('div');
+        const monthDiv = document.createElement('div');
         monthDiv.classList.add('month');
 
-        let monthTitle = document.createElement('div');
+        const monthTitle = document.createElement('div');
         monthTitle.classList.add('month-title');
         monthTitle.textContent = `${monthName} ${year}`;
         monthDiv.appendChild(monthTitle);
@@ -244,14 +388,24 @@
         return monthDiv;
     }
 
+    // Helpers
+    function getFirstDayOfMonth(year, month) {
+        return new Date(year, month, 1).getDay();
+    }
+    function getDaysInMonth(year, month) {
+        return new Date(year, month + 1, 0).getDate();
+    }
+
+    // Modal logic
     let selectedDateKey = null;
     function handleCellClick(e) {
+        // e is used to fetch data attributes or prevent default if needed
         selectedDateKey = e.currentTarget.getAttribute('data-date');
         if (!selectedDateKey) return;
 
         document.getElementById('modalDate').textContent = selectedDateKey;
 
-        // Prefill existing data if present
+        // Pre-fill if existing
         const existing = signups[selectedDateKey];
         document.getElementById('nameInput').value = existing ? existing.name : '';
         document.getElementById('phoneInput').value = existing ? existing.phone : '';
@@ -260,10 +414,10 @@
         document.getElementById('modalOverlay').style.display = 'flex';
     }
 
-    // Modal buttons
     document.getElementById('closeBtn').addEventListener('click', () => {
         document.getElementById('modalOverlay').style.display = 'none';
     });
+
     document.getElementById('saveBtn').addEventListener('click', saveSignup);
     document.getElementById('deleteBtn').addEventListener('click', clearSignup);
 
@@ -272,7 +426,6 @@
         const nameValue = document.getElementById('nameInput').value.trim();
         const phoneValue = document.getElementById('phoneInput').value.trim();
 
-        // POST to /api/signups
         fetch('/api/signups', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -282,18 +435,19 @@
             .then(data => {
                 // Hide modal
                 document.getElementById('modalOverlay').style.display = 'none';
-                // Refresh the signups
-                fetchSignups();
+                // Refresh signups and rebuild
+                return fetchSignups();
+            })
+            .then(() => {
+                refreshCalendar();
             })
             .catch(err => console.error(err));
     }
 
     function clearSignup() {
         if (!selectedDateKey) return;
-
         if (!confirm(`Clear sign-up info for ${selectedDateKey}?`)) return;
 
-        // POST with empty name/phone
         fetch('/api/signups', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -304,49 +458,13 @@
                 // Hide modal
                 document.getElementById('modalOverlay').style.display = 'none';
                 // Refresh
-                fetchSignups();
+                return fetchSignups();
             })
-            .catch(err => console.error(err));
-    }
-
-    // Fetch sign-ups from server
-    function fetchSignups() {
-        fetch('/api/signups')
-            .then(res => res.json())
-            .then(data => {
-                signups = data;
+            .then(() => {
                 refreshCalendar();
             })
             .catch(err => console.error(err));
     }
-
-    function refreshCalendar() {
-        const container = document.getElementById('calendarContainer');
-        container.innerHTML = '';
-
-        const today = new Date();
-        const currentYear = today.getFullYear();
-        const currentMonth = today.getMonth();
-
-        // Current month
-        const currentMonthCalendar = buildCalendar(currentYear, currentMonth);
-        container.appendChild(currentMonthCalendar);
-
-        // Next month
-        let nextMonth = currentMonth + 1;
-        let nextMonthYear = currentYear;
-        if (nextMonth > 11) {
-            nextMonth = 0;
-            nextMonthYear++;
-        }
-        const nextMonthCalendar = buildCalendar(nextMonthYear, nextMonth);
-        container.appendChild(nextMonthCalendar);
-    }
-
-    // Init
-    window.addEventListener('DOMContentLoaded', () => {
-        fetchSignups();
-    });
 </script>
 </body>
 </html>
