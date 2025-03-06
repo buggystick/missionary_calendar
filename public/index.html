@@ -2,15 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <!-- Ensure mobile-friendly scaling -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Missionary Meal Calendar</title>
     <style>
         body {
             margin: 0;
             font-family: Arial, sans-serif;
             padding: 1em;
-        }
-        h1 {
-            text-align: center;
         }
 
         /* Example Banner (previously “unused”) */
@@ -21,6 +20,11 @@
             margin-bottom: 1em;
             text-align: center;
             font-weight: bold;
+        }
+
+        h1 {
+            text-align: center;
+            margin: 0.5em 0;
         }
 
         .qr-code {
@@ -43,44 +47,51 @@
             border-radius: 4px;
             font-size: 1rem;
         }
-
-        /* “Secondary” style for an extra button */
         .month-nav button.secondary {
             background: #999;
             color: #fff;
         }
 
+        /* Make the calendar container and month responsive */
         .calendar-container {
             display: flex;
             justify-content: center;
             margin: 0 auto;
-            max-width: 600px;
+            max-width: 900px;
+            width: 100%;
         }
+
         .month {
-            width: 360px;
+            width: 100%;
+            max-width: 600px; /* On large screens, don’t exceed 600px wide */
             border: 1px solid #333;
             border-radius: 5px;
             overflow: hidden;
         }
+
         .month-title {
             background: #eee;
             text-align: center;
             font-weight: bold;
             padding: 10px 0;
+            font-size: 1.2em;
         }
+
+        /* Make table cells more flexible in height and wrapping */
         table {
             width: 100%;
             border-collapse: collapse;
             text-align: center;
-            table-layout: fixed;
         }
+
         th, td {
             border: 1px solid #ccc;
             padding: 8px;
             vertical-align: top;
-            height: 60px;
-            position: relative;
+            min-height: 80px;           /* Increased to give more room */
+            white-space: normal;        /* Allow text to wrap */
         }
+
         th {
             background: #f9f9f9;
         }
@@ -103,11 +114,13 @@
             background-color: #ffc;
         }
 
+        /* Name & phone info clearly visible */
         .sign-up-info {
-            font-size: 0.9em;
+            display: block;
+            font-size: 0.95em;
             color: #333;
             margin-top: 4px;
-            display: block;
+            word-wrap: break-word;  /* Wrap phone if it's long */
         }
 
         /* Modal overlay */
@@ -178,6 +191,17 @@
         .delete-btn {
             background-color: #f44336;
             color: #fff;
+        }
+
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 600px) {
+            th, td {
+                padding: 6px;
+                min-height: 60px; /* Slightly smaller on mobile */
+            }
+            .month-title {
+                font-size: 1.1em;
+            }
         }
     </style>
 </head>
@@ -341,9 +365,9 @@
             const dayOfWeek = cellDate.getDay(); // 0=Sunday, 1=Monday, etc.
 
             // We highlight Sundays to use .highlight-day
-            if (dayOfWeek === 0) {
-                dayCell.classList.add('highlight-day');
-            }
+            // if (dayOfWeek === 0) {
+            //     dayCell.classList.add('highlight-day');
+            // }
 
             // Grey out if in the past
             cellDate.setHours(0, 0, 0, 0);
