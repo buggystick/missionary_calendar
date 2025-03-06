@@ -63,7 +63,7 @@
 
         .month {
             width: 100%;
-            max-width: 600px; /* On large screens, don’t exceed 600px wide */
+            max-width: 800px; /* On large screens, don’t exceed 600px wide */
             border: 1px solid #333;
             border-radius: 5px;
             overflow: hidden;
@@ -77,7 +77,10 @@
             font-size: 1.2em;
         }
 
-        /* Force table columns to be equal width */
+        /*
+          1) table-layout: fixed  => uniform column widths
+          2) width: 100%         => fill container
+        */
         table {
             table-layout: fixed;
             width: 100%;
@@ -85,38 +88,50 @@
             text-align: center;
         }
 
+        /*
+          1) A fixed height (e.g. 100px).
+          2) overflow: hidden or auto if we want scrollbars.
+             We'll demonstrate overflow: hidden on the cell,
+             but give an inner <div> a scroll if needed.
+        */
         th, td {
             border: 1px solid #ccc;
-            padding: 8px;
             vertical-align: top;
-            min-height: 80px;
-            /* Ensure text can wrap instead of expanding the column */
-            white-space: normal;
-            word-wrap: break-word;
-            overflow-wrap: anywhere;
-            /* Each of the 7 columns shares width equally; optional if table-layout:fixed is enough */
-            width: calc(100% / 7);
+            width: calc(100% / 7); /* Enforce equal column widths */
+            height: 100px;         /* Fixed row height */
+            position: relative;    /* We'll position an inner container */
+            padding: 0;            /* Remove default padding in TD to handle scrolling better */
+            overflow: hidden;      /* Hide overflow so rows remain uniform in height */
         }
 
         th {
             background: #f9f9f9;
+            padding: 8px;
+        }
+
+        /* We'll place contents in an inner container so we can scroll that if needed */
+        .day-content {
+            padding: 8px;
+            width: 100%;
+            height: 100%;
+            box-sizing: border-box;
+            overflow-y: clip;
         }
 
         /* Hover effect on future days */
-        td:hover:not(.past-day) {
+        td:hover:not(.past-day) .day-content {
             background: #f0f8ff;
             cursor: pointer;
         }
 
-        /* Past day (disabled) */
-        .past-day {
+        .past-day .day-content {
             background: #eee;
             color: #999;
             cursor: not-allowed !important;
         }
 
-        .highlight-day {
-            background-color: #ffc;
+        .highlight-day .day-content {
+            background-color: #ffc; /* Sundays highlighted */
         }
 
         /* Name & phone info clearly visible */
@@ -125,7 +140,8 @@
             font-size: 0.95em;
             color: #333;
             margin-top: 4px;
-            word-wrap: break-word;  /* Wrap phone if it's long */
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
         }
 
         /* Modal overlay */
@@ -142,7 +158,6 @@
             z-index: 1000;
         }
 
-        /* Modal box */
         .modal {
             background: #fff;
             padding: 20px;
@@ -151,7 +166,6 @@
             width: 80%;
         }
 
-        /* Wrap content in an additional .modal-content class */
         .modal-content {
             background: #fafafa;
             padding: 1em;
@@ -198,14 +212,16 @@
             color: #fff;
         }
 
-        /* Responsive adjustments for smaller screens */
+        /* Responsive tweak for small screens */
         @media (max-width: 600px) {
-            th, td {
+            th {
                 padding: 6px;
-                min-height: 60px; /* Slightly smaller on mobile */
             }
             .month-title {
                 font-size: 1.1em;
+            }
+            th, td {
+                height: 80px; /* smaller row height on mobile if desired */
             }
         }
     </style>
@@ -346,15 +362,15 @@
 
         // Fill empty cells before first day
         for (let i = 0; i < firstDay; i++) {
-            let emptyCell = document.createElement('td');
-            row.appendChild(emptyCell);
+            const emptyTd = document.createElement('td');
+            row.appendChild(emptyTd);
         }
 
-        // For disabling past dates
+        // Compare with "today" to grey out past days
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Populate days
+        // Populate the days
         for (; currentDay <= daysInMonth; currentDay++) {
             if (row.children.length === 7) {
                 tbody.appendChild(row);
@@ -363,43 +379,46 @@
 
             const dayCell = document.createElement('td');
             const dateKey = `${year}-${month + 1}-${currentDay}`;
-            dayCell.textContent = currentDay;
 
-            // Figure out if this day is Sunday (highlight example)
+            // We'll put the cell's clickable content in a .day-content div
+            const dayContent = document.createElement('div');
+            dayContent.classList.add('day-content');
+            // Show the numeric day
+            dayContent.textContent = currentDay;
+
+            // Check if Sunday
             const cellDate = new Date(year, month, currentDay);
-            const dayOfWeek = cellDate.getDay(); // 0=Sunday, 1=Monday, etc.
-
-            // We highlight Sundays to use .highlight-day
+            const dayOfWeek = cellDate.getDay(); // 0=Sunday
             // if (dayOfWeek === 0) {
-            //     dayCell.classList.add('highlight-day');
+            //     dayCell.classList.add('highlight-day'); // or apply to dayContent
             // }
 
-            // Grey out if in the past
             cellDate.setHours(0, 0, 0, 0);
             if (cellDate < today) {
+                // Past day
                 dayCell.classList.add('past-day');
             } else {
-                // Future or current day: clickable
-                dayCell.setAttribute('data-date', dateKey);
-                // Properly use the event parameter (e) to avoid “unused parameter” warnings
-                dayCell.addEventListener('click', (e) => handleCellClick(e));
+                // Future or current day
+                dayContent.setAttribute('data-date', dateKey);
+                dayContent.addEventListener('click', handleCellClick);
             }
 
-            // If there's signup info, show it
+            // If there's existing signup data, display it
             if (signups[dateKey]) {
                 const infoSpan = document.createElement('span');
                 infoSpan.classList.add('sign-up-info');
                 infoSpan.textContent = `${signups[dateKey].name} (${signups[dateKey].phone})`;
-                dayCell.appendChild(infoSpan);
+                dayContent.appendChild(document.createElement('br'));
+                dayContent.appendChild(infoSpan);
             }
 
+            dayCell.appendChild(dayContent);
             row.appendChild(dayCell);
         }
 
         // Fill remaining cells in last row
         while (row.children.length < 7) {
-            let emptyCell = document.createElement('td');
-            row.appendChild(emptyCell);
+            row.appendChild(document.createElement('td'));
         }
         tbody.appendChild(row);
         table.appendChild(tbody);
@@ -428,7 +447,6 @@
     // Modal logic
     let selectedDateKey = null;
     function handleCellClick(e) {
-        // e is used to fetch data attributes or prevent default if needed
         selectedDateKey = e.currentTarget.getAttribute('data-date');
         if (!selectedDateKey) return;
 
