@@ -22,7 +22,7 @@ const pool = new Pool({
 });
 
 const app = express();
-app.use(sslRedirect());
+app.use(sslRedirect(['production'], 301));
 app.use(express.json());
 
 // Serve static files (index.html, etc.) from /public
