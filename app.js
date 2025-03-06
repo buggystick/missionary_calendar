@@ -1,7 +1,9 @@
 import sslRedirect from 'heroku-ssl-redirect';
 import express from 'express';
 import path from 'path';
-import { Pool } from 'pg';
+import { pg } from 'pg';
+
+const Pool = pg.Pool;
 
 // Heroku sets process.env.DATABASE_URL if you added Heroku Postgres
 // We'll also respect process.env.PORT
