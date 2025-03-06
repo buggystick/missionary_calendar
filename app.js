@@ -5,6 +5,7 @@ import pg from 'pg';
 
 const sslRedirect = herokuSSLRedirect.default
 const Pool = pg.Pool;
+const __dirname = import.meta.dirname;
 
 // Heroku sets process.env.DATABASE_URL if you added Heroku Postgres
 // We'll also respect process.env.PORT
