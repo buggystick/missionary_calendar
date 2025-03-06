@@ -77,8 +77,9 @@
             font-size: 1.2em;
         }
 
-        /* Make table cells more flexible in height and wrapping */
+        /* Force table columns to be equal width */
         table {
+            table-layout: fixed;
             width: 100%;
             border-collapse: collapse;
             text-align: center;
@@ -88,8 +89,13 @@
             border: 1px solid #ccc;
             padding: 8px;
             vertical-align: top;
-            min-height: 80px;           /* Increased to give more room */
-            white-space: normal;        /* Allow text to wrap */
+            min-height: 80px;
+            /* Ensure text can wrap instead of expanding the column */
+            white-space: normal;
+            word-wrap: break-word;
+            overflow-wrap: anywhere;
+            /* Each of the 7 columns shares width equally; optional if table-layout:fixed is enough */
+            width: calc(100% / 7);
         }
 
         th {
@@ -109,7 +115,6 @@
             cursor: not-allowed !important;
         }
 
-        /* Highlight certain days (Sundays in our example) */
         .highlight-day {
             background-color: #ffc;
         }
