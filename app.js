@@ -1,7 +1,7 @@
 import sslRedirect from 'heroku-ssl-redirect';
 import express from 'express';
 import path from 'path';
-import { pg } from 'pg';
+import pg from 'pg';
 
 const Pool = pg.Pool;
 
