@@ -1,3 +1,4 @@
+import sslRedirect from 'heroku-ssl-redirect';
 const express = require('express');
 const path = require('path');
 const { Pool } = require('pg');
@@ -19,6 +20,7 @@ const pool = new Pool({
 });
 
 const app = express();
+app.use(sslRedirect());
 app.use(express.json());
 
 // Serve static files (index.html, etc.) from /public
