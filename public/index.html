@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
-    <!-- Ensure mobile-friendly scaling -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Missionary Meal Calendar</title>
     <style>
         body {
@@ -233,11 +232,6 @@
 </head>
 <body>
 
-<!-- Example of a banner using the .information-banner class -->
-<!--<div class="information-banner">-->
-<!--    Important Note: You can sign up to feed the missionaries on any future date. Past dates are not available.-->
-<!--</div>-->
-
 <h1>Farmington Ward Missionary Meal Calendar</h1>
 <p style="text-align:center;">
     Scan the QR code or visit <strong>https://missionaries.farmingtonward.church</strong> to sign up!
@@ -265,10 +259,10 @@
                 Sign Up for <span id="modalDate"></span>
             </h3>
             <label for="nameInput">Your Name</label>
-            <input type="text" id="nameInput" placeholder="Enter your name" />
+            <input type="text" id="nameInput" placeholder="Enter your name"/>
 
             <label for="phoneInput">Phone Number</label>
-            <input type="text" id="phoneInput" placeholder="(555) 555-5555" />
+            <input type="text" id="phoneInput" placeholder="(555) 555-5555"/>
 
             <div class="modal-buttons">
                 <button class="delete-btn" id="deleteBtn">Clear</button>
@@ -282,10 +276,7 @@
 <script>
     // signups = { "YYYY-M-D": { name, phone }, ... }
     let signups = {};
-
-    // Track which month is displayed
-    let displayedYear;
-    let displayedMonth;
+    let displayedYear, displayedMonth;
 
     window.addEventListener('DOMContentLoaded', () => {
         const today = new Date();
@@ -302,8 +293,8 @@
             const currentMonthIndex = currentDate.getMonth();
             const currentYearIndex = currentDate.getFullYear();
 
-            // If currently showing today's month, go next
             if (displayedYear === currentYearIndex && displayedMonth === currentMonthIndex) {
+                // Go to next
                 displayedMonth++;
                 if (displayedMonth > 11) {
                     displayedMonth = 0;
@@ -311,47 +302,66 @@
                 }
                 document.getElementById('nextMonthBtn').textContent = '« Current Month';
             } else {
-                // Otherwise, go back to current month
+                // Back to current
                 displayedYear = currentYearIndex;
                 displayedMonth = currentMonthIndex;
                 document.getElementById('nextMonthBtn').textContent = 'Next Month »';
             }
             refreshCalendar();
         });
+
+        // WEBSOCKET LOGIC
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${protocol}//${window.location.host}`;
+        const socket = new WebSocket(wsUrl);
+
+        socket.addEventListener('open', () => {
+            console.log('WebSocket connected');
+        });
+        socket.addEventListener('close', () => {
+            console.log('WebSocket disconnected');
+        });
+        socket.addEventListener('message', (evt) => {
+            try {
+                const data = JSON.parse(evt.data);
+                if (data.event === 'signup-changed') {
+                    console.log('Received signup-changed event:', data);
+                    // Easiest approach: re-fetch everything to ensure we have the latest signups
+                    fetchSignups().then(() => {
+                        refreshCalendar();
+                    });
+                }
+            } catch (err) {
+                console.error('WebSocket message parse error:', err);
+            }
+        });
     });
 
-    // Fetch signups from server
+    // Fetch signups from our /api/signups
     function fetchSignups() {
         return fetch('/api/signups')
             .then(res => res.json())
-            .then(data => {
-                signups = data;
-            })
+            .then(data => { signups = data; })
             .catch(err => console.error(err));
     }
 
-    // Build or rebuild the calendar
+    // Rebuild the calendar for displayedYear/displayedMonth
     function refreshCalendar() {
         const container = document.getElementById('calendarContainer');
-        container.innerHTML = ''; // Clear existing
-
+        container.innerHTML = '';
         const monthDiv = buildCalendar(displayedYear, displayedMonth);
         container.appendChild(monthDiv);
     }
 
     function buildCalendar(year, month) {
         const monthName = new Date(year, month, 1).toLocaleString('default', { month: 'long' });
-        const daysInMonth = getDaysInMonth(year, month);
-        const firstDay = getFirstDayOfMonth(year, month);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDay = new Date(year, month, 1).getDay();
 
-        // Table for this month
         const table = document.createElement('table');
-
-        // Header row with days of week
         const thead = document.createElement('thead');
         const headerRow = document.createElement('tr');
-        const weekdays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        weekdays.forEach(day => {
+        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
             const th = document.createElement('th');
             th.textContent = day;
             headerRow.appendChild(th);
@@ -359,22 +369,18 @@
         thead.appendChild(headerRow);
         table.appendChild(thead);
 
-        // Table body with day cells
         const tbody = document.createElement('tbody');
-        let currentDay = 1;
         let row = document.createElement('tr');
+        let currentDay = 1;
 
         // Fill empty cells before first day
         for (let i = 0; i < firstDay; i++) {
-            const emptyTd = document.createElement('td');
-            row.appendChild(emptyTd);
+            row.appendChild(document.createElement('td'));
         }
 
-        // Compare with "today" to grey out past days
         const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        today.setHours(0,0,0,0);
 
-        // Populate the days
         for (; currentDay <= daysInMonth; currentDay++) {
             if (row.children.length === 7) {
                 tbody.appendChild(row);
@@ -382,27 +388,19 @@
             }
 
             const dayCell = document.createElement('td');
-            const dateKey = `${year}-${month + 1}-${currentDay}`;
-
-            // We'll put the cell's clickable content in a .day-content div
+            const dateKey = `${year}-${month+1}-${currentDay}`;
             const dayContent = document.createElement('div');
             dayContent.classList.add('day-content');
-            // Show the numeric day
             dayContent.textContent = currentDay;
 
-            // Check if Sunday
             const cellDate = new Date(year, month, currentDay);
-            const dayOfWeek = cellDate.getDay(); // 0=Sunday
-            // if (dayOfWeek === 0) {
-            //     dayCell.classList.add('highlight-day'); // or apply to dayContent
-            // }
+            cellDate.setHours(0,0,0,0);
 
-            cellDate.setHours(0, 0, 0, 0);
             if (cellDate < today) {
                 // Past day
                 dayCell.classList.add('past-day');
             } else {
-                // Future or current day
+                // Future/current day
                 dayContent.setAttribute('data-date', dateKey);
                 dayContent.addEventListener('click', handleCellClick);
             }
@@ -420,14 +418,13 @@
             row.appendChild(dayCell);
         }
 
-        // Fill remaining cells in last row
+        // Fill leftover cells in last row
         while (row.children.length < 7) {
             row.appendChild(document.createElement('td'));
         }
         tbody.appendChild(row);
         table.appendChild(tbody);
 
-        // Wrap table in a .month div
         const monthDiv = document.createElement('div');
         monthDiv.classList.add('month');
 
@@ -436,19 +433,10 @@
         monthTitle.textContent = `${monthName} ${year}`;
         monthDiv.appendChild(monthTitle);
         monthDiv.appendChild(table);
-
         return monthDiv;
     }
 
-    // Helpers
-    function getFirstDayOfMonth(year, month) {
-        return new Date(year, month, 1).getDay();
-    }
-    function getDaysInMonth(year, month) {
-        return new Date(year, month + 1, 0).getDate();
-    }
-
-    // Modal logic
+    // Modal handling
     let selectedDateKey = null;
     function handleCellClick(e) {
         selectedDateKey = e.currentTarget.getAttribute('data-date');
@@ -456,12 +444,10 @@
 
         document.getElementById('modalDate').textContent = selectedDateKey;
 
-        // Pre-fill if existing
         const existing = signups[selectedDateKey];
         document.getElementById('nameInput').value = existing ? existing.name : '';
         document.getElementById('phoneInput').value = existing ? existing.phone : '';
 
-        // Show modal
         document.getElementById('modalOverlay').style.display = 'flex';
     }
 
@@ -483,14 +469,10 @@
             body: JSON.stringify({ dateKey: selectedDateKey, name: nameValue, phone: phoneValue })
         })
             .then(res => res.json())
-            .then(data => {
-                // Hide modal
-                document.getElementById('modalOverlay').style.display = 'none';
-                // Refresh signups and rebuild
-                return fetchSignups();
-            })
             .then(() => {
-                refreshCalendar();
+                document.getElementById('modalOverlay').style.display = 'none';
+                // We don't manually refresh here because the 'signup-changed' event
+                // from the WebSocket will cause ALL clients to refresh automatically
             })
             .catch(err => console.error(err));
     }
@@ -505,14 +487,9 @@
             body: JSON.stringify({ dateKey: selectedDateKey, name: '', phone: '' })
         })
             .then(res => res.json())
-            .then(data => {
-                // Hide modal
-                document.getElementById('modalOverlay').style.display = 'none';
-                // Refresh
-                return fetchSignups();
-            })
             .then(() => {
-                refreshCalendar();
+                document.getElementById('modalOverlay').style.display = 'none';
+                // Again, let the WebSocket event handle reloading for everyone
             })
             .catch(err => console.error(err));
     }
