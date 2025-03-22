@@ -233,8 +233,6 @@
 </head>
 <body>
 
-<script src="/socket.io/socket.io.js"></script>
-
 <!-- Example of a banner using the .information-banner class -->
 <!--<div class="information-banner">-->
 <!--    Important Note: You can sign up to feed the missionaries on any future date. Past dates are not available.-->
@@ -322,47 +320,15 @@
         });
     });
 
-    const socket = io(); // Connect to WebSocket server
-
-    // Fetch sign-ups and listen for real-time updates
-    function initializeSignups() {
-        fetch('/api/signups')
+    // Fetch signups from server
+    function fetchSignups() {
+        return fetch('/api/signups')
             .then(res => res.json())
             .then(data => {
                 signups = data;
-                refreshCalendar();
             })
             .catch(err => console.error(err));
-
-        // Listen for WebSocket updates
-        socket.on('signupUpdate', (update) => {
-            console.log('Received real-time update:', update);
-            if (update.name === null && update.phone === null) {
-                delete signups[update.dateKey]; // Remove if cleared
-            } else {
-                signups[update.dateKey] = { name: update.name, phone: update.phone };
-            }
-            refreshCalendar();
-        });
     }
-
-    // Run this on page load
-    window.addEventListener('DOMContentLoaded', () => {
-        const today = new Date();
-        displayedYear = today.getFullYear();
-        displayedMonth = today.getMonth();
-
-        initializeSignups(); // Load data & enable WebSockets
-
-        document.getElementById('nextMonthBtn').addEventListener('click', () => {
-            toggleMonth();
-        });
-
-        document.getElementById('helpBtn').addEventListener('click', () => {
-            alert("Need help? Click on a future date to sign up!");
-        });
-    });
-
 
     // Build or rebuild the calendar
     function refreshCalendar() {

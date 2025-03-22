@@ -2,8 +2,6 @@ import herokuSSLRedirect from 'heroku-ssl-redirect';
 import express from 'express';
 import path from 'path';
 import pg from 'pg';
-const { createServer } = require('http'); // For WebSockets
-const { Server } = require('socket.io');
 
 const sslRedirect = herokuSSLRedirect.default
 const Pool = pg.Pool;
@@ -27,11 +25,8 @@ const pool = new Pool({
 
 const app = express();
 app.use(sslRedirect(['production'], 301));
-const server = createServer(app); // HTTP Server
-const io = new Server(server);    // Attach WebSocket server to it
-
-
 app.use(express.json());
+
 // Serve static files (index.html, etc.) from /public
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -89,34 +84,23 @@ app.post('/api/signups', async (req, res) => {
         if (!name && !phone) {
             // Clear the sign-up: DELETE that row
             await pool.query('DELETE FROM signups WHERE date_key = $1', [dateKey]);
-            io.emit('signupUpdate', { dateKey, name: null, phone: null }); // Notify all clients
             return res.json({ message: `Cleared sign-up for ${dateKey}` });
         } else {
             // UPSERT sign-up.
             // Some Postgres versions let you do INSERT ... ON CONFLICT (date_key) DO UPDATE
             await pool.query(`
-            INSERT INTO signups (date_key, name, phone)
-            VALUES ($1, $2, $3)
-            ON CONFLICT (date_key)
-            DO UPDATE SET name = EXCLUDED.name, phone = EXCLUDED.phone
-            `, [dateKey, name, phone]);
+        INSERT INTO signups (date_key, name, phone)
+        VALUES ($1, $2, $3)
+        ON CONFLICT (date_key)
+        DO UPDATE SET name = EXCLUDED.name, phone = EXCLUDED.phone
+      `, [dateKey, name, phone]);
 
-            io.emit('signupUpdate', { dateKey, name, phone }); // Notify all clients
             return res.json({ message: `Saved sign-up for ${dateKey}` });
         }
     } catch (err) {
         console.error(err);
         return res.status(500).json({ error: 'Database error' });
     }
-});
-
-// WebSockets: Listen for connections
-io.on('connection', (socket) => {
-    console.log('A user connected');
-
-    socket.on('disconnect', () => {
-        console.log('A user disconnected');
-    });
 });
 
 // Fallback route: serve the index.html for any unknown paths
