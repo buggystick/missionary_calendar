@@ -484,15 +484,23 @@
         })
             .then(res => res.json())
             .then(data => {
+                // Immediately update local state to avoid waiting for WebSocket
+                if (!nameValue && !phoneValue) {
+                    delete signups[selectedDateKey];
+                } else {
+                    signups[selectedDateKey] = { name: nameValue, phone: phoneValue };
+                }
+
+                // Refresh calendar now
+                refreshCalendar();
+
                 // Hide modal
                 document.getElementById('modalOverlay').style.display = 'none';
-                // Refresh signups and rebuild
-                return fetchSignups();
             })
-            .then(() => {
-                refreshCalendar();
-            })
-            .catch(err => console.error(err));
+            .catch(err => {
+                console.error(err);
+                alert('Something went wrong saving your sign-up.');
+            });
     }
 
     function clearSignup() {
@@ -506,15 +514,15 @@
         })
             .then(res => res.json())
             .then(data => {
-                // Hide modal
-                document.getElementById('modalOverlay').style.display = 'none';
-                // Refresh
-                return fetchSignups();
-            })
-            .then(() => {
+                // Immediately update local state
+                delete signups[selectedDateKey];
                 refreshCalendar();
+                document.getElementById('modalOverlay').style.display = 'none';
             })
-            .catch(err => console.error(err));
+            .catch(err => {
+                console.error(err);
+                alert('Could not clear the sign-up.');
+            });
     }
 </script>
 </body>
