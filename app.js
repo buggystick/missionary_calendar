@@ -145,7 +145,11 @@ function broadcastWsMessage(msgObj) {
     }
 }
 
-// ----- START THE SERVER -----
-server.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-});
+// Start the server if not running a test
+if (process.env.NODE_ENV !== 'test') {
+    server.listen(PORT, () => {
+        console.log(`Server listening on port ${PORT}`);
+    });
+}
+
+export default app;
