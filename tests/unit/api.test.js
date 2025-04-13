@@ -25,7 +25,7 @@ vi.mock('pg', () => {
     };
 });
 
-import app from '../app.js';
+import app from '../../app.js';
 
 describe('Missionary Calendar API', () => {
     it('GET /api/signups returns signups in JSON format', async () => {
