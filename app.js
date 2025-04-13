@@ -13,13 +13,22 @@ const __dirname = import.meta.dirname;
 const PORT = process.env.PORT || 3000;
 const DATABASE_URL = process.env.DATABASE_URL;
 
-// Create a Pool instance (with SSL config for Heroku)
-const pool = new Pool({
-    connectionString: DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
+let pool;
+
+//  Use a mock Pool when running functional tests
+if (process.env.MOCK_DB === 'true') {
+    pool = {
+        query: async () => ({ rows: [] }), // returns an empty result set
+    };
+} else {
+    const Pool = pg.Pool;
+    pool = new Pool({
+        connectionString: DATABASE_URL,
+        ssl: {
+            rejectUnauthorized: false
+        }
+    });
+}
 
 const app = express();
 app.use(sslRedirect(['production'], 301));
@@ -30,6 +39,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize DB table if not present
 async function initDB() {
+    if (process.env.MOCK_DB === 'true') return; // skip
     try {
         await pool.query(`
       CREATE TABLE IF NOT EXISTS signups (
@@ -145,8 +155,8 @@ function broadcastWsMessage(msgObj) {
     }
 }
 
-// Start the server if not running a test
-if (process.env.NODE_ENV !== 'test') {
+// Start the server if not running a unit test (Vitest)
+if (!process.env.IS_VITEST) {
     server.listen(PORT, () => {
         console.log(`Server listening on port ${PORT}`);
     });
