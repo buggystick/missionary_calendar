@@ -1,0 +1,56 @@
+{
+  "name": "missionary-calendar",
+  "description": "A calendar application for missionary scheduling",
+  "repository": "https://gitlab.com/your-username/missionary-calendar",
+  "keywords": ["node", "express", "calendar"],
+  "env": {
+    "NODE_ENV": {
+      "description": "Environment for the application",
+      "value": "production"
+    },
+    "DATABASE_URL": {
+      "description": "URL for the PostgreSQL database",
+      "required": true
+    }
+  },
+  "addons": [
+    "heroku-postgresql:hobby-dev"
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  },
+  "environments": {
+    "test": {
+      "scripts": {
+        "test": "npm test"
+      },
+      "env": {
+        "NODE_ENV": "test",
+        "MOCK_DB": "true"
+      }
+    },
+    "review": {
+      "addons": [
+        "heroku-postgresql:hobby-dev"
+      ]
+    },
+    "staging": {
+      "scripts": {
+        "postdeploy": "echo 'App deployed to staging'"
+      }
+    },
+    "production": {
+      "scripts": {
+        "postdeploy": "echo 'App deployed to production'"
+      }
+    }
+  }
+}

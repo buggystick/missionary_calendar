@@ -1,0 +1,69 @@
+# GitLab CI/CD Configuration
+
+stages:
+  - test
+  - deploy
+
+# Cache node_modules for faster builds
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+
+# Install dependencies before each job
+before_script:
+  - npm ci
+
+# Run unit tests
+unit_tests:
+  stage: test
+  image: node:latest
+  script:
+    - npm run test:unit
+  only:
+    - merge_requests
+    - main
+
+# Run functional tests
+functional_tests:
+  stage: test
+  image: mcr.microsoft.com/playwright:latest
+  script:
+    - npx playwright install --with-deps
+    - npm run test:functional
+  only:
+    - merge_requests
+    - main
+
+# Deploy to Heroku staging for all branches except main
+deploy_staging:
+  stage: deploy
+  image: ruby:latest
+  script:
+    - apt-get update -qy
+    - apt-get install -y ruby-dev
+    - gem install dpl
+    - dpl --provider=heroku --app=$HEROKU_APP_STAGING --api-key=$HEROKU_API_KEY
+  only:
+    - branches
+  except:
+    - main
+  environment:
+    name: staging
+    url: https://$HEROKU_APP_STAGING.herokuapp.com
+
+# Deploy to Heroku production for main branch
+deploy_production:
+  stage: deploy
+  image: ruby:latest
+  script:
+    - apt-get update -qy
+    - apt-get install -y ruby-dev
+    - gem install dpl
+    - dpl --provider=heroku --app=$HEROKU_APP_PRODUCTION --api-key=$HEROKU_API_KEY
+  only:
+    - main
+  environment:
+    name: production
+    url: https://$HEROKU_APP_PRODUCTION.herokuapp.com
+  when: manual # Requires manual approval for production deployment
