@@ -10,14 +10,12 @@ cache:
   paths:
     - node_modules/
 
-# Install dependencies before each job
-before_script:
-  - npm ci
-
 # Run unit tests
 unit_tests:
   stage: test
   image: node:latest
+  before_script:
+    - npm ci
   script:
     - npm run test:unit
   only:
@@ -28,6 +26,8 @@ unit_tests:
 functional_tests:
   stage: test
   image: mcr.microsoft.com/playwright:latest
+  before_script:
+    - npm ci
   script:
     - npx playwright install --with-deps
     - npm run test:functional
@@ -38,12 +38,15 @@ functional_tests:
 # Deploy to Heroku staging for all branches except main
 deploy_staging:
   stage: deploy
-  image: ruby:latest
+  image: node:16
   script:
-    - apt-get update -qy
-    - apt-get install -y ruby-dev
-    - gem install dpl
-    - dpl --provider=heroku --app=$HEROKU_APP_STAGING --api-key=$HEROKU_API_KEY
+    - npm install -g heroku
+    - echo "machine api.heroku.com login _ password $HEROKU_API_KEY" > ~/.netrc
+    - echo "machine git.heroku.com login _ password $HEROKU_API_KEY" >> ~/.netrc
+    - chmod 600 ~/.netrc
+    - heroku container:login
+    - heroku container:push web --app $HEROKU_APP_STAGING
+    - heroku container:release web --app $HEROKU_APP_STAGING
   only:
     - branches
   except:
@@ -55,12 +58,15 @@ deploy_staging:
 # Deploy to Heroku production for main branch
 deploy_production:
   stage: deploy
-  image: ruby:latest
+  image: node:16
   script:
-    - apt-get update -qy
-    - apt-get install -y ruby-dev
-    - gem install dpl
-    - dpl --provider=heroku --app=$HEROKU_APP_PRODUCTION --api-key=$HEROKU_API_KEY
+    - npm install -g heroku
+    - echo "machine api.heroku.com login _ password $HEROKU_API_KEY" > ~/.netrc
+    - echo "machine git.heroku.com login _ password $HEROKU_API_KEY" >> ~/.netrc
+    - chmod 600 ~/.netrc
+    - heroku container:login
+    - heroku container:push web --app $HEROKU_APP_PRODUCTION
+    - heroku container:release web --app $HEROKU_APP_PRODUCTION
   only:
     - main
   environment:
