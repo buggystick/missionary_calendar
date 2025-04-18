@@ -11,10 +11,7 @@ export default defineConfig({
         baseURL: process.env.STAGING_URL,
         headless: true,
     },
-    // webServer: {
-    //     reuseExistingServer: true,
-    // },
-    // reporter: [
-    //     ['html', { outputFolder: process.env.PLAYWRIGHT_HTML_REPORT || 'playwright-report-staging' }]
-    // ],
+    reporter: [
+        ['html', { outputFolder: process.env.PLAYWRIGHT_HTML_REPORT || 'playwright-report-staging' }]
+    ],
 });

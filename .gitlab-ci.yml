@@ -57,12 +57,8 @@ functional_tests:
     - npx playwright install --with-deps
   script:
     - export STAGING_URL="https://staging.farmingtonward.church"
-#    - export PLAYWRIGHT_HTML_REPORT="playwright-report-staging"
-#    - mkdir -p playwright-report-staging
-    ## DEBUG
-    - ls -a
-    - cat playwright.staging.config.js
-    ###
+    - export PLAYWRIGHT_HTML_REPORT="playwright-report-staging"
+    - mkdir -p playwright-report-staging
     - npx playwright test --config=./playwright.staging.config.js
   only:
     - main
