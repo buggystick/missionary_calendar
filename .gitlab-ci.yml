@@ -42,6 +42,7 @@ deploy_staging:
     - git push heroku HEAD:refs/heads/main
     - export STAGING_URL=$(heroku apps:info --json -a $HEROKU_APP_STAGING | jq -r '.app.web_url')
     - echo "STAGING_URL=$STAGING_URL"
+    - heroku whoami
     - echo $STAGING_URL >> deploy.env
   only:
     - main
