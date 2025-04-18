@@ -14,4 +14,7 @@ export default defineConfig({
     webServer: {
         reuseExistingServer: true,
     },
+    reporter: [
+        ['html', { outputFolder: process.env.PLAYWRIGHT_HTML_REPORT || 'playwright-report-staging' }]
+    ],
 });
