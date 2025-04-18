@@ -40,7 +40,9 @@ deploy_staging:
     - git config --global user.name "GitLab CI"
     - heroku git:remote --app $HEROKU_APP_STAGING
     - git push heroku HEAD:refs/heads/main
-    - echo "STAGING_URL=$(heroku apps:info missionary-calendar-staging --json | jq -r '.app.web_url')" >> deploy.env
+    - export STAGING_URL=$(heroku apps:info missionary-calendar-staging --json | jq -r '.app.web_url')
+    - echo "STAGING_URL=$STAGING_URL"
+    - echo $STAGING_URL >> deploy.env
   only:
     - main
   environment:
