@@ -1,3 +1,5 @@
+// playwright.staging.config.js
+
 import { defineConfig } from '@playwright/test';
 
 export default defineConfig({
@@ -5,11 +7,10 @@ export default defineConfig({
     timeout: 30000,
     retries: 1,
     use: {
-        // This will be overridden by the CI pipeline with the actual Heroku app URL
-        baseURL: process.env.STAGING_URL || 'https://your-staging-app.herokuapp.com',
+        // This can be overridden by environment variables in .gitlab-ci.yml
+        baseURL: process.env.STAGING_URL,
         headless: true,
     },
-    // No webServer section as we're testing against a deployed app
     webServer: {
         reuseExistingServer: true,
     },
