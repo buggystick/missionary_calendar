@@ -7,7 +7,7 @@
     "start": "node app.js",
     "test": "npm run test:unit && npm run test:functional",
     "test:unit": "IS_VITEST=true vitest run tests/unit",
-    "test:functional": "playwright test",
+    "test:functional": "playwright test"
   },
   "keywords": [],
   "author": "",
