@@ -71,8 +71,9 @@ This repository has been configured to work with GitLab CI/CD and Heroku pipelin
    ```
 
 3. The GitLab CI/CD pipeline will automatically:
-   - Run tests on your branch
-   - Deploy to your staging app on Heroku
+   - Run unit tests as a quick sanity check
+   - Deploy to your staging app on Heroku when unit tests pass
+   - Run functional tests against the live code in Heroku
 
 4. Create a merge request on GitLab
 5. Once the merge request is approved and merged, you can promote the staging app to production:
@@ -116,9 +117,19 @@ npm test
 # Run unit tests only
 npm run test:unit
 
-# Run functional tests only
+# Run functional tests locally
 npm run test:functional
+
+# Run functional tests against staging environment
+npm run test:functional:staging
 ```
+
+The new workflow runs tests in the following order:
+1. Unit tests run first as a quick sanity check
+2. If unit tests pass, the code is deployed to Heroku staging
+3. Functional tests run against the live code in Heroku staging
+
+This ensures that functional tests are run against the actual deployed application, providing more accurate test results.
 
 ## License
 
