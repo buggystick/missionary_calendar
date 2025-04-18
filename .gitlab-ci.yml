@@ -56,14 +56,9 @@ functional_tests:
     - npm ci
     - npx playwright install --with-deps
   script:
-    # Just for debugging: list files to confirm playwright.staging.config.js is present
-    - ls -la
-
-    # Run the tests, passing in the custom domain as STAGING_URL
-    - STAGING_URL="https://staging.farmingtonward.church" \
-      PLAYWRIGHT_HTML_REPORT="playwright-report-staging" \
-      npx playwright test --config=./playwright.staging.config.js
-
+    - export STAGING_URL="https://staging.farmingtonward.church"
+    - export PLAYWRIGHT_HTML_REPORT="playwright-report-staging"
+    - npx playwright test --config=./playwright.staging.config.js
   only:
     - main
   artifacts:
