@@ -32,6 +32,7 @@ deploy_staging:
     GIT_DEPTH: 0  # Perform a full clone instead of a shallow clone
   script:
     - curl https://cli-assets.heroku.com/install-ubuntu.sh | sh && rm -rf /var/lib/apt/lists/*
+    - curl https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 -o /usr/local/bin/jq && chmod +x /usr/local/bin/jq
     - echo "machine api.heroku.com login _ password $HEROKU_API_KEY" > ~/.netrc
     - echo "machine git.heroku.com login _ password $HEROKU_API_KEY" >> ~/.netrc
     - chmod 600 ~/.netrc
