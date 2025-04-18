@@ -59,23 +59,28 @@ functional_tests:
     # Debug: List files to verify playwright.staging.config.js exists
     - ls -la
     # Make sure the config file is readable
-    - if [ -f "./playwright.staging.config.js" ]; then chmod +r ./playwright.staging.config.js; else echo "Config file not found, creating it"; cat > ./playwright.staging.config.js << 'EOL'
-import { defineConfig } from '@playwright/test';
+    - |
+      if [ -f "./playwright.staging.config.js" ]; then 
+        chmod +r ./playwright.staging.config.js
+      else 
+        echo "Config file not found, creating it"
+        cat > ./playwright.staging.config.js << 'EOL'
+        import { defineConfig } from '@playwright/test';
 
-export default defineConfig({
-    testDir: './tests/functional',
-    timeout: 30000,
-    retries: 1,
-    use: {
-        baseURL: process.env.STAGING_URL || 'https://your-staging-app.herokuapp.com',
-        headless: true,
-    },
-    webServer: {
-        reuseExistingServer: true,
-    },
-});
-EOL
-fi
+        export default defineConfig({
+            testDir: './tests/functional',
+            timeout: 30000,
+            retries: 1,
+            use: {
+                baseURL: process.env.STAGING_URL || 'https://your-staging-app.herokuapp.com',
+                headless: true,
+            },
+            webServer: {
+                reuseExistingServer: true,
+            },
+        });
+        EOL
+      fi
     # Run tests against the deployed Heroku app using the staging config
     - STAGING_URL=https://$HEROKU_APP_STAGING.herokuapp.com PLAYWRIGHT_HTML_REPORT=playwright-report-staging npx playwright test --config=./playwright.staging.config.js
   only:
