@@ -15,20 +15,14 @@ const DATABASE_URL = process.env.DATABASE_URL;
 
 let pool;
 
-//  Use a mock Pool when running functional tests
-if (process.env.MOCK_DB === 'true') {
-    pool = {
-        query: async () => ({ rows: [] }), // returns an empty result set
-    };
-} else {
-    const Pool = pg.Pool;
-    pool = new Pool({
-        connectionString: DATABASE_URL,
-        ssl: {
-            rejectUnauthorized: false
-        }
-    });
-}
+// Create a PostgreSQL connection pool using the DATABASE_URL environment variable
+const Pool = pg.Pool;
+pool = new Pool({
+    connectionString: DATABASE_URL,
+    ssl: {
+        rejectUnauthorized: false
+    }
+});
 
 const app = express();
 app.use(sslRedirect(['production'], 301));
@@ -39,7 +33,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 // Initialize DB table if not present
 async function initDB() {
-    if (process.env.MOCK_DB === 'true') return; // skip
     try {
         await pool.query(`
       CREATE TABLE IF NOT EXISTS signups (

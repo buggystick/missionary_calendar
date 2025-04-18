@@ -1,8 +1,8 @@
 // tests/functional/calendar.test.js
 import { test, expect } from '@playwright/test';
 
-test('User can open modal and submit a signup', async ({ page }) => {
-    await page.goto('http://localhost:3000');
+test('User can open modal and submit a signup', async ({ page, baseURL }) => {
+    await page.goto('/');
 
     // Wait for calendar to appear
     await page.waitForSelector('.calendar-container');

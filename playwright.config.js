@@ -9,7 +9,7 @@ export default defineConfig({
         headless: true,
     },
     webServer: {
-        command: 'MOCK_DB=true NODE_ENV=test  node app.js',
+        command: 'NODE_ENV=test  node app.js',
         port: 3000,
         timeout: 10000,
         reuseExistingServer: !process.env.CI,

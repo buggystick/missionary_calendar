@@ -55,3 +55,22 @@ deploy_staging:
   environment:
     name: staging
     url: https://$HEROKU_APP_STAGING.herokuapp.com
+
+# Run functional tests against staging environment
+staging_functional_tests:
+  stage: deploy
+  image: mcr.microsoft.com/playwright:latest
+  needs: ["deploy_staging"]
+  before_script:
+    - npm ci
+  script:
+    - npx playwright install --with-deps
+    - echo "export default { baseURL: 'https://$HEROKU_APP_STAGING.herokuapp.com', webServer: { reuseExistingServer: true } };" > playwright.staging.config.js
+    # The tests will use the PostgreSQL database that's already configured on Heroku
+    - PLAYWRIGHT_HTML_REPORT=playwright-report-staging npx playwright test --config=playwright.staging.config.js
+  only:
+    - main
+  artifacts:
+    when: always
+    paths:
+      - playwright-report-staging/

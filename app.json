@@ -37,20 +37,13 @@
         "MOCK_DB": "true"
       }
     },
-    "review": {
-      "addons": [
-        "heroku-postgresql:hobby-dev"
-      ]
-    },
     "staging": {
       "scripts": {
         "postdeploy": "echo 'App deployed to staging'"
-      }
-    },
-    "production": {
-      "scripts": {
-        "postdeploy": "echo 'App deployed to production'"
-      }
+      },
+      "addons": [
+        "heroku-postgresql:hobby-dev"
+      ]
     }
   }
 }
