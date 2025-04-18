@@ -38,19 +38,19 @@ functional_tests:
 # Deploy to Heroku staging for all branches except main
 deploy_staging:
   stage: deploy
-  image: node:20
+  image: node:latest
   script:
-    - npm install -g heroku
+    - curl https://cli-assets.heroku.com/install-ubuntu.sh | sh && rm -rf /var/lib/apt/lists/*
     - echo "machine api.heroku.com login _ password $HEROKU_API_KEY" > ~/.netrc
     - echo "machine git.heroku.com login _ password $HEROKU_API_KEY" >> ~/.netrc
     - chmod 600 ~/.netrc
     - git config --global user.email "ci@gitlab.com"
     - git config --global user.name "GitLab CI"
     - heroku git:remote --app $HEROKU_APP_STAGING
+    - git fetch --all --unshallow
     - git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_STAGING.git HEAD:refs/heads/main
   only:
     - main
   environment:
     name: staging
     url: https://$HEROKU_APP_STAGING.herokuapp.com
-
