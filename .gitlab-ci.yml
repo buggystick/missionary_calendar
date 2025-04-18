@@ -39,11 +39,14 @@ deploy_staging:
     - git config --global user.name "GitLab CI"
     - heroku git:remote --app $HEROKU_APP_STAGING
     - git push heroku HEAD:refs/heads/main
+    - echo "STAGING_URL=$(heroku apps:info missionary-calendar-staging --json | jq -r '.app.web_url')" >> deploy.env
   only:
     - main
   environment:
     name: staging
-    url: https://$HEROKU_APP_STAGING.herokuapp.com
+  artifacts:
+    reports:
+      dotenv: deploy.env
 
 # Run functional tests against the live code in Heroku
 functional_tests:
@@ -54,11 +57,10 @@ functional_tests:
     GIT_DEPTH: 0  # full clone
   before_script:
     - npm ci
-    - npx playwright install --with-deps
   script:
-    - export STAGING_URL="https://staging.farmingtonward.church"
     - export PLAYWRIGHT_HTML_REPORT="playwright-report-staging"
     - mkdir -p playwright-report-staging
+    - echo "Running playwright test at $STAGING_URL"
     - npx playwright test --config=./playwright.staging.config.js
   only:
     - main
