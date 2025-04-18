@@ -51,7 +51,7 @@ deploy_staging:
 # Run functional tests against the live code in Heroku
 functional_tests:
   stage: functional_test
-  image: mcr.microsoft.com/playwright:latest
+  image: mcr.microsoft.com/playwright:v1.52.0-noble
   needs: ["deploy_staging"]
   variables:
     GIT_DEPTH: 0  # full clone
