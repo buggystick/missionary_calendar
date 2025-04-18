@@ -38,15 +38,16 @@ functional_tests:
 # Deploy to Heroku staging for all branches except main
 deploy_staging:
   stage: deploy
-  image: node:16
+  image: node:20
   script:
     - npm install -g heroku
     - echo "machine api.heroku.com login _ password $HEROKU_API_KEY" > ~/.netrc
     - echo "machine git.heroku.com login _ password $HEROKU_API_KEY" >> ~/.netrc
     - chmod 600 ~/.netrc
-    - heroku container:login
-    - heroku container:push web --app $HEROKU_APP_STAGING
-    - heroku container:release web --app $HEROKU_APP_STAGING
+    - git config --global user.email "ci@example.com"
+    - git config --global user.name "GitLab CI"
+    - heroku git:remote --app $HEROKU_APP_STAGING
+    - git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_STAGING.git HEAD:refs/heads/main
   only:
     - branches
   except:
@@ -58,15 +59,16 @@ deploy_staging:
 # Deploy to Heroku production for main branch
 deploy_production:
   stage: deploy
-  image: node:16
+  image: node:20
   script:
     - npm install -g heroku
     - echo "machine api.heroku.com login _ password $HEROKU_API_KEY" > ~/.netrc
     - echo "machine git.heroku.com login _ password $HEROKU_API_KEY" >> ~/.netrc
     - chmod 600 ~/.netrc
-    - heroku container:login
-    - heroku container:push web --app $HEROKU_APP_PRODUCTION
-    - heroku container:release web --app $HEROKU_APP_PRODUCTION
+    - git config --global user.email "ci@example.com"
+    - git config --global user.name "GitLab CI"
+    - heroku git:remote --app $HEROKU_APP_PRODUCTION
+    - git push https://heroku:$HEROKU_API_KEY@git.heroku.com/$HEROKU_APP_PRODUCTION.git HEAD:refs/heads/main
   only:
     - main
   environment:
