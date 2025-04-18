@@ -7,7 +7,6 @@ import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 
 const sslRedirect = herokuSSLRedirect.default;
-const Pool = pg.Pool;
 const __dirname = import.meta.dirname;
 
 const PORT = process.env.PORT || 3000;

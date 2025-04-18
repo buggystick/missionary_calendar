@@ -68,7 +68,7 @@ staging_functional_tests:
     - |
       echo "export default { baseURL: 'https://$HEROKU_APP_STAGING.herokuapp.com', webServer: { reuseExistingServer: true } };" > playwright.staging.config.js
     # The tests will use the PostgreSQL database that's already configured on Heroku
-    - PLAYWRIGHT_HTML_REPORT=playwright-report-staging npx playwright test --config=playwright.staging.config.js
+    - PLAYWRIGHT_HTML_REPORT=playwright-report-staging npx playwright test --config=playwright.config.js
   only:
     - main
   artifacts:
