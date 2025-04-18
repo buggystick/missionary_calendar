@@ -137,3 +137,4 @@ dist
 
 #Jetbrains IDE
 .idea/
+/test-results/.last-run.json
