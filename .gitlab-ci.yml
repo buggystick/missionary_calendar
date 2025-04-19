@@ -43,7 +43,7 @@ deploy_staging:
     - export STAGING_URL=$(heroku apps:info --json -a $HEROKU_APP_STAGING | jq -r '.app.web_url')
     - echo "STAGING_URL=$STAGING_URL"
     - heroku whoami
-    - heroku apps:info -a "$HEROKU_APP_STAGING"
+    - heroku apps:info -a "$HEROKU_APP_STAGING" --json | jq .
     - echo $STAGING_URL >> deploy.env
   only:
     - main
