@@ -41,7 +41,7 @@ deploy_staging:
     - git config --global user.name "GitLab CI"
     - heroku git:remote --app $HEROKU_APP_STAGING
     # 1) Push the code and tee the output to a file
-    - git push heroku HEAD:refs/heads/main | tee heroku_push.log
+    - git push heroku HEAD:refs/heads/main 2>&1 | tee heroku_push.log
 
     # 2) Parse the line containing "deployed to Heroku"
     #    This uses sed to extract 'https://...' until the next space
