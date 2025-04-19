@@ -40,8 +40,13 @@ deploy_staging:
     - git config --global user.name "GitLab CI"
     - heroku git:remote --app $HEROKU_APP_STAGING
     - git push heroku HEAD:refs/heads/main
-    - heroku plugins:install @heroku-cli/plugin-apps
-    - export STAGING_URL=$(heroku apps:info --json -a $HEROKU_APP_STAGING | jq -r '.app.web_url')
+    - |
+      export STAGING_URL=$(curl -s -n \
+        -H "Accept: application/vnd.heroku+json; version=3" \
+        -H "Authorization: Bearer $HEROKU_API_KEY" \
+        https://api.heroku.com/apps/$HEROKU_APP_STAGING \
+        | jq -r '.web_url')
+#    - export STAGING_URL=$(heroku apps:info --json -a $HEROKU_APP_STAGING | jq -r '.app.web_url')
     - echo "STAGING_URL=$STAGING_URL"
     - echo $STAGING_URL >> deploy.env
   only:
