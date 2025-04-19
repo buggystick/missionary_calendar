@@ -41,13 +41,29 @@ deploy_staging:
     - heroku git:remote --app $HEROKU_APP_STAGING
     - git push heroku HEAD:refs/heads/main
     - |
-      curl -s -n \
-        -H "Accept: application/vnd.heroku+json; version=3" \
-        -H "Authorization: Bearer $HEROKU_API_KEY" \
-        https://api.heroku.com/apps/$HEROKU_APP_STAGING \
-        | jq -r '.web_url'
-#    - export STAGING_URL=$(heroku apps:info --json -a $HEROKU_APP_STAGING | jq -r '.app.web_url')
-    - echo "STAGING_URL=$STAGING_URL"
+      JSON_APP_INFO="$(
+        curl -s -n \
+          -H "Accept: application/vnd.heroku+json; version=3" \
+          -H "Authorization: Bearer $HEROKU_API_KEY" \
+          https://api.heroku.com/apps/$HEROKU_APP_STAGING
+      )"
+      
+      # If you only want the default domain (if present)
+      STAGING_URL="$(echo "$JSON_APP_INFO" | jq -r '.web_url')"
+      
+      if [ "$STAGING_URL" = "null" ] || [ -z "$STAGING_URL" ]; then
+        # Fallback or parse custom domains if needed
+        STAGING_URL="$(
+          echo "$JSON_APP_INFO" | jq -r '.domains[0].hostname'
+        )"
+        # Prepend https:// if not included
+        STAGING_URL="https://$STAGING_URL"
+      fi
+      
+      # Remove trailing slash if you like
+      STAGING_URL="$(echo "$STAGING_URL" | sed 's/\/$//')"
+      
+      echo "STAGING_URL=$STAGING_URL"
     - echo $STAGING_URL >> deploy.env
   only:
     - main
