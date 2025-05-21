@@ -27,34 +27,30 @@ test('User can open modal and submit a signup', async ({ page, baseURL }) => {
 });
 
 test('Simultaneous signup POSTs should preserve first-writer wins', async ({ browser, request, page }) => {
-    // 1. Grab dateKey via UI (as you already do)
-    await page.goto('/');
-    await page.waitForSelector('td:not(.past-day) .day-content');
-    const dateKey = await page.locator('td:not(.past-day) .day-content').first().getAttribute('data-date');
+    // Dynamically pick a unique date 15 days in the future to avoid conflicts
+    const uniqueDate = new Date();
+    uniqueDate.setDate(uniqueDate.getDate() + 15);
+    const uniqueDateKey = uniqueDate.toISOString().split('T')[0];
 
-    // 2. Fire three POSTs concurrently
     const payloads = [
-        { dateKey, name: 'User One',   phone: '111-111-1111' },
-        { dateKey, name: 'User Two',   phone: '222-222-2222' },
-        { dateKey, name: 'User Three', phone: '333-333-3333' }
+        { dateKey: uniqueDateKey, name: 'User One',   phone: '111-111-1111' },
+        { dateKey: uniqueDateKey, name: 'User Two',   phone: '222-222-2222' },
+        { dateKey: uniqueDateKey, name: 'User Three', phone: '333-333-3333' }
     ];
 
     const [r1, r2, r3] = await Promise.all(
         payloads.map(p => request.post('/api/signups', { data: p }))
     );
 
-    // all should return 200
     expect(await r1.ok()).toBeTruthy();
     expect(await r2.ok()).toBeTruthy();
     expect(await r3.ok()).toBeTruthy();
 
-    // 3. Fetch the canonical state
     const getResp = await request.get('/api/signups');
     expect(await getResp.ok()).toBeTruthy();
     const data = await getResp.json();
 
-    // 4. Assert that the "first" payload wins
-    expect(data[dateKey].name).toBe('User One');
-    expect(data[dateKey].phone).toBe('111-111-1111');
+    expect(data[uniqueDateKey].name).toBe('User One');
+    expect(data[uniqueDateKey].phone).toBe('111-111-1111');
 });
 
