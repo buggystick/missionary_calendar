@@ -110,15 +110,27 @@ test('Multiple concurrent users can schedule the same day without data override'
     await page2.reload();
     await page3.reload();
 
-    // Wait for calendar to appear again
+    // Wait for calendar to appear again and ensure it's fully loaded
     await page1.waitForSelector('.calendar-container');
     await page2.waitForSelector('.calendar-container');
     await page3.waitForSelector('.calendar-container');
 
-    // Check the signup data for the day on all pages
-    // We'll click on the day again to see the current data
-    await page1.locator(`td[data-date="${dateKey}"] .day-content`).click();
-    await expect(page1.locator('#modalOverlay')).toBeVisible();
+    // Add additional wait to ensure the calendar is fully rendered with all days
+    await page1.waitForSelector('td .day-content', { timeout: 5000 });
+
+    // Check if the specific day element exists before trying to click it
+    const dayElement = page1.locator(`td[data-date="${dateKey}"] .day-content`);
+
+    // Wait for the specific day element with a shorter timeout to fail faster if not found
+    try {
+        await dayElement.waitFor({ state: 'attached', timeout: 5000 });
+        // Click the day to see the current data
+        await dayElement.click();
+        await expect(page1.locator('#modalOverlay')).toBeVisible();
+    } catch (error) {
+        // If the day element is not found, fail the test with a meaningful error message
+        throw new Error(`Day element with date ${dateKey} not found after page reload. This could indicate a rendering issue or that the date is no longer available in the calendar view.`);
+    }
 
     // Get the current values in the form
     const nameValue = await page1.inputValue('#nameInput');
