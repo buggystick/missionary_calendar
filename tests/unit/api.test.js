@@ -40,7 +40,7 @@ describe('Missionary Calendar API', () => {
         expect(res.statusCode).toBe(200);
         expect(res.body).toHaveProperty('2025-04-06');
         expect(res.body['2025-04-06']).toEqual({
-            name: 'Elder Smith',
+            name: 'Sister Smith',
             phone: '555-1234'
         });
     });
@@ -50,7 +50,7 @@ describe('Missionary Calendar API', () => {
             .post('/api/signups')
             .send({
                 dateKey: '2025-04-07',
-                name: 'Sister Jones',
+                name: 'Brother Jones',
                 phone: '555-5678'
             });
 
