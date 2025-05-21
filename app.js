@@ -88,23 +88,38 @@ app.post('/api/signups', async (req, res) => {
             broadcastWsMessage({ event: 'signup-changed', dateKey, name: '', phone: '' });
             return res.json({ message: `Cleared sign-up for ${dateKey}` });
         } else {
-            // First-write-wins: try to insert, but if date_key already exists, do nothing
-            const insertRes = await pool.query(`
-                INSERT INTO signups (date_key, name, phone)
-                VALUES ($1, $2, $3)
-                ON CONFLICT (date_key)
-                DO NOTHING
-                RETURNING *
-            `, [dateKey, name, phone]);
+            // First-write-wins: use advisory lock and transaction for atomicity
+            const client = await pool.connect();
+            try {
+                await client.query('BEGIN');
+                // Lock by dateKey to serialize concurrent inserts
+                await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [dateKey]);
 
-            if (insertRes.rowCount === 0) {
-                // someone else already signed up for this date—leave it alone
-                return res.json({ message: `Date ${dateKey} already taken` });
+                const insertRes = await client.query(
+                    `INSERT INTO signups (date_key, name, phone)
+                     VALUES ($1, $2, $3)
+                     ON CONFLICT (date_key) DO NOTHING
+                     RETURNING *;`,
+                    [dateKey, name, phone]
+                );
+
+                await client.query('COMMIT');
+
+                if (insertRes.rowCount === 0) {
+                    // someone else already signed up for this date—leave it alone
+                    return res.json({ message: `Date ${dateKey} already taken` });
+                }
+
+                // only broadcast & report a save when *this* request actually inserted
+                broadcastWsMessage({ event: 'signup-changed', dateKey, name, phone });
+                return res.json({ message: `Saved sign-up for ${dateKey}` });
+            } catch (err) {
+                await client.query('ROLLBACK');
+                console.error(err);
+                return res.status(500).json({ error: 'Database error' });
+            } finally {
+                client.release();
             }
-
-            // only broadcast & report a save when *this* request actually inserted
-            broadcastWsMessage({ event: 'signup-changed', dateKey, name, phone });
-            return res.json({ message: `Saved sign-up for ${dateKey}` });
         }
     } catch (err) {
         console.error(err);
