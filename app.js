@@ -49,15 +49,17 @@ initDB();
 
 // ----- REST API ENDPOINTS -----
 
-/**
- * GET /api/signups
- * Returns all signups in the shape: { "YYYY-M-D": { name, phone }, ... }
- */
+// Serve the main calendar page
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// API: Get all signups
 app.get('/api/signups', async (req, res) => {
     try {
         const result = await pool.query('SELECT date_key, name, phone FROM signups');
-        let signups = {};
-        for (let row of result.rows) {
+        const signups = {};
+        for (const row of result.rows) {
             signups[row.date_key] = { name: row.name, phone: row.phone };
         }
         return res.json(signups);
@@ -70,7 +72,7 @@ app.get('/api/signups', async (req, res) => {
 /**
  * POST /api/signups
  * Expects { dateKey, name, phone } in JSON body.
- * If name & phone are empty, we DELETE. Otherwise we UPSERT.
+ * If name & phone are empty, we DELETE. Otherwise we insert only on first-writer-wins.
  * After updating the DB, broadcast to connected WebSocket clients.
  */
 app.post('/api/signups', async (req, res) => {
@@ -86,17 +88,22 @@ app.post('/api/signups', async (req, res) => {
             broadcastWsMessage({ event: 'signup-changed', dateKey, name: '', phone: '' });
             return res.json({ message: `Cleared sign-up for ${dateKey}` });
         } else {
-            // UPSERT sign-up
-            await pool.query(`
-        INSERT INTO signups (date_key, name, phone)
-        VALUES ($1, $2, $3)
-        ON CONFLICT (date_key)
-        DO UPDATE SET name = EXCLUDED.name, phone = EXCLUDED.phone
-      `, [dateKey, name, phone]);
+            // First-write-wins: try to insert, but if date_key already exists, do nothing
+            const insertRes = await pool.query(`
+                INSERT INTO signups (date_key, name, phone)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (date_key)
+                DO NOTHING
+                RETURNING *
+            `, [dateKey, name, phone]);
 
-            // Broadcast to all connected WebSocket clients
+            if (insertRes.rowCount === 0) {
+                // someone else already signed up for this date—leave it alone
+                return res.json({ message: `Date ${dateKey} already taken` });
+            }
+
+            // only broadcast & report a save when *this* request actually inserted
             broadcastWsMessage({ event: 'signup-changed', dateKey, name, phone });
-
             return res.json({ message: `Saved sign-up for ${dateKey}` });
         }
     } catch (err) {
@@ -114,33 +121,23 @@ app.get('*', (req, res) => {
 
 // Create a raw HTTP server from our Express app
 const server = createServer(app);
-
-// Create a WebSocketServer that shares that same HTTP server/port
 const wss = new WebSocketServer({ server });
-
-// Track all active WebSocket connections
 const wsClients = new Set();
 
 wss.on('connection', (ws) => {
-    // Add this new socket to our Set
     wsClients.add(ws);
-
-    // When socket closes, remove it from the Set
-    ws.on('close', () => {
-        wsClients.delete(ws);
-    });
-
-    // (Optional) If you'd like to listen for messages from the client
+    ws.on('close', () => wsClients.delete(ws));
     ws.on('message', (message) => {
         console.log('Received message from client:', message);
     });
 });
 
-// Broadcast a JS object to all connected WebSocket clients
+/**
+ * Broadcast a JS object to all connected WebSocket clients
+ */
 function broadcastWsMessage(msgObj) {
     const jsonStr = JSON.stringify(msgObj);
     for (const ws of wsClients) {
-        // Make sure socket is open before sending
         if (ws.readyState === 1) {
             ws.send(jsonStr);
         }
