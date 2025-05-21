@@ -10,20 +10,27 @@ vi.mock('heroku-ssl-redirect', () => ({
 vi.mock('pg', () => {
     const mockQuery = vi.fn().mockResolvedValue({
         rows: [
-            { date_key: '2025-04-06', name: 'Elder Smith', phone: '555-1234' }
-        ]
+            { date_key: '2025-04-06', name: 'Sister Smith', phone: '555-1234' }
+        ],
+        rowCount: 1
     });
+
+    const mockClient = {
+        query: mockQuery,
+        release: vi.fn()
+    };
 
     return {
         default: {
             Pool: vi.fn(() => ({
                 query: mockQuery,
-                connect: vi.fn(),
+                connect: vi.fn().mockResolvedValue(mockClient),
                 end: vi.fn()
             }))
         }
     };
 });
+
 
 import app from '../../app.js';
 
