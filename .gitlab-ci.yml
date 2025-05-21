@@ -45,7 +45,7 @@ deploy_staging:
 
     # 2) Parse the line containing "deployed to Heroku"
     #    This uses sed to extract 'https://...' until the next space
-    #- export STAGING_URL="$(grep 'deployed to Heroku' heroku_push.log | sed -E 's/.*(https:\/\/[^ ]+).*/\1/')"
+    - export STAGING_URL="$(grep 'deployed to Heroku' heroku_push.log | sed -E 's/.*(https:\/\/[^ ]+).*/\1/')"
 
     # 3) Confirm it worked
     - echo "STAGING_URL=$STAGING_URL"
