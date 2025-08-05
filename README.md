@@ -101,6 +101,8 @@ This repository has been configured to work with GitLab CI/CD and Heroku pipelin
    ```bash
    export DATABASE_URL=your_postgres_connection_string
    export PORT=3000
+   # disable SSL locally if your Postgres doesn't use it
+   export DATABASE_SSL=false
    ```
 
 4. Start the server:

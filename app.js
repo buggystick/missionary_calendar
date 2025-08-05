@@ -16,12 +16,21 @@ let pool;
 
 // Create a PostgreSQL connection pool using the DATABASE_URL environment variable
 const Pool = pg.Pool;
-pool = new Pool({
-    connectionString: DATABASE_URL,
-    ssl: {
-        rejectUnauthorized: false
-    }
-});
+
+// Determine if SSL should be disabled
+const disableSSL =
+    process.env.NODE_ENV === 'development' ||
+    String(process.env.DATABASE_SSL).toLowerCase() === 'false';
+
+const poolConfig = {
+    connectionString: DATABASE_URL
+};
+
+if (!disableSSL) {
+    poolConfig.ssl = { rejectUnauthorized: false };
+}
+
+pool = new Pool(poolConfig);
 
 const app = express();
 app.use(sslRedirect(['production'], 301));
