@@ -31,15 +31,15 @@ jobs:
           HEROKU_PIPELINE: ${{ secrets.HEROKU_PIPELINE }}
         run: |
           PR_NUMBER=${{ github.event.pull_request.number }}
-          curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
-          heroku plugins:install @heroku-cli/plugin-reviewapps >/dev/null
           echo "Waiting for review app for PR $PR_NUMBER"
           found=false
+          PIPELINE_ID=$(curl -fsS -H "Authorization: Bearer $HEROKU_API_KEY" -H "Accept: application/vnd.heroku+json; version=3" "https://api.heroku.com/pipelines?eq[name]=$HEROKU_PIPELINE" | jq -r '.[0].id')
           for i in {1..30}; do
-            APP_NAME=$(heroku reviewapps --pipeline "$HEROKU_PIPELINE" --json 2>/dev/null | jq -r --argjson pr "$PR_NUMBER" '.[] | select(.pr_number == $pr) | .app.name')
-            if [ -n "$APP_NAME" ]; then
-              heroku reviewapps:wait -a "$APP_NAME"
-              APP_URL=$(heroku apps:info -a "$APP_NAME" --json 2>/dev/null | jq -r '.app.web_url')
+            APP_JSON=$(curl -fsS -H "Authorization: Bearer $HEROKU_API_KEY" -H "Accept: application/vnd.heroku+json; version=3.review-apps" "https://api.heroku.com/pipelines/$PIPELINE_ID/review-apps" | jq -c --argjson pr "$PR_NUMBER" '.[] | select(.pr_number == $pr)')
+            APP_ID=$(echo "$APP_JSON" | jq -r '.app.id // empty')
+            STATUS=$(echo "$APP_JSON" | jq -r '.status // empty')
+            if [ -n "$APP_ID" ] && [ "$STATUS" = "created" ]; then
+              APP_URL=$(curl -fsS -H "Authorization: Bearer $HEROKU_API_KEY" -H "Accept: application/vnd.heroku+json; version=3" "https://api.heroku.com/apps/$APP_ID" | jq -r '.web_url')
               echo "STAGING_URL=$APP_URL" >> $GITHUB_ENV
               echo "Review app URL: $APP_URL"
               found=true
