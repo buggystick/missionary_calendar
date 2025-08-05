@@ -30,17 +30,16 @@ jobs:
           HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
           HEROKU_PIPELINE: ${{ secrets.HEROKU_PIPELINE }}
         run: |
-          PR_NUMBER=${{ github.event.number }}
+          PR_NUMBER=${{ github.event.pull_request.number }}
           curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
-          curl -L https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 -o /usr/local/bin/jq
-          chmod +x /usr/local/bin/jq
+          heroku plugins:install @heroku-cli/plugin-reviewapps >/dev/null
           echo "Waiting for review app for PR $PR_NUMBER"
           found=false
           for i in {1..30}; do
-            APP_NAME=$(heroku reviewapps --pipeline "$HEROKU_PIPELINE" --json | jq -r ".[] | select(.pr_number == $PR_NUMBER) | .app.name")
+            APP_NAME=$(heroku reviewapps --pipeline "$HEROKU_PIPELINE" --json 2>/dev/null | jq -r --argjson pr "$PR_NUMBER" '.[] | select(.pr_number == $pr) | .app.name')
             if [ -n "$APP_NAME" ]; then
               heroku reviewapps:wait -a "$APP_NAME"
-              APP_URL=$(heroku apps:info -a "$APP_NAME" --json | jq -r '.app.web_url')
+              APP_URL=$(heroku apps:info -a "$APP_NAME" --json 2>/dev/null | jq -r '.app.web_url')
               echo "STAGING_URL=$APP_URL" >> $GITHUB_ENV
               echo "Review app URL: $APP_URL"
               found=true

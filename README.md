@@ -11,6 +11,11 @@ This repository uses GitHub Actions and Heroku Review Apps for testing and revie
 
 Test reports are uploaded as workflow artifacts so you can inspect failures directly from the pull request.
 
+To allow the workflow to access Heroku, add these repository secrets:
+
+- `HEROKU_API_KEY` – API key for a Heroku account that can create review apps
+- `HEROKU_PIPELINE` – the name of the Heroku pipeline hosting the review apps
+
 ## Development
 
 ### Prerequisites
