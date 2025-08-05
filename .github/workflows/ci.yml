@@ -1,0 +1,64 @@
+name: CI
+
+on:
+  pull_request:
+
+jobs:
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run test:unit
+
+  functional_tests:
+    needs: unit_tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - run: npm ci
+      - name: Wait for review app
+        env:
+          HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+          HEROKU_PIPELINE: ${{ secrets.HEROKU_PIPELINE }}
+        run: |
+          PR_NUMBER=${{ github.event.number }}
+          curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+          curl -L https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 -o /usr/local/bin/jq
+          chmod +x /usr/local/bin/jq
+          echo "Waiting for review app for PR $PR_NUMBER"
+          found=false
+          for i in {1..30}; do
+            APP_NAME=$(heroku reviewapps --pipeline "$HEROKU_PIPELINE" --json | jq -r ".[] | select(.pr_number == $PR_NUMBER) | .app.name")
+            if [ -n "$APP_NAME" ]; then
+              heroku reviewapps:wait -a "$APP_NAME"
+              APP_URL=$(heroku apps:info -a "$APP_NAME" --json | jq -r '.app.web_url')
+              echo "STAGING_URL=$APP_URL" >> $GITHUB_ENV
+              echo "Review app URL: $APP_URL"
+              found=true
+              break
+            fi
+            echo "Review app not yet available. Waiting..."
+            sleep 10
+          done
+          if [ "$found" != "true" ]; then
+            echo "Review app not found" >&2
+            exit 1
+          fi
+      - name: Run functional tests
+        run: |
+          PLAYWRIGHT_HTML_REPORT="playwright-report" npx playwright test --config=./playwright.staging.config.js
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
