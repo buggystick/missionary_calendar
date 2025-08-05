@@ -35,13 +35,13 @@ jobs:
           PR_NUMBER=${{ github.event.pull_request.number }}
           echo "Waiting for review app for PR $PR_NUMBER"
           found=false
-          PIPELINE_ID=$(heroku pipelines:info -p "$HEROKU_PIPELINE" --json | jq -r '.id')
+          PIPELINE_ID=$(heroku pipelines:info "$HEROKU_PIPELINE" --json | jq -r '.id')
           for i in {1..30}; do
-            APP_JSON=$(heroku api -H "Accept: application/vnd.heroku+json; version=3.review-apps" /pipelines/$PIPELINE_ID/review-apps | jq -c --argjson pr "$PR_NUMBER" '.[] | select(.pr_number == $pr)')
+            APP_JSON=$(heroku curl -H "Accept: application/vnd.heroku+json; version=3.review-apps" /pipelines/$PIPELINE_ID/review-apps | jq -c --argjson pr "$PR_NUMBER" '.[] | select(.pr_number == $pr)')
             APP_NAME=$(echo "$APP_JSON" | jq -r '.app.name // empty')
             STATUS=$(echo "$APP_JSON" | jq -r '.status // empty')
             if [ -n "$APP_NAME" ] && [ "$STATUS" = "created" ]; then
-              APP_URL=$(heroku apps:info -a "$APP_NAME" --json | jq -r '.app.web_url')
+              APP_URL=$(heroku apps:info --app "$APP_NAME" --json | jq -r '.app.web_url')
               echo "STAGING_URL=$APP_URL" >> $GITHUB_ENV
               echo "Review app URL: $APP_URL"
               found=true
