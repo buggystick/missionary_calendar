@@ -1,0 +1,75 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  unit_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run test:unit
+
+  deploy_staging:
+    needs: unit_tests
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+      HEROKU_APP_STAGING: ${{ secrets.HEROKU_APP_STAGING }}
+    outputs:
+      STAGING_URL: ${{ steps.deploy.outputs.STAGING_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Deploy to Heroku
+        id: deploy
+        run: |
+          set -o pipefail
+          curl https://cli-assets.heroku.com/install-ubuntu.sh | sh
+          curl https://github.com/jqlang/jq/releases/download/jq-1.7.1/jq-linux-amd64 -o /usr/local/bin/jq
+          chmod +x /usr/local/bin/jq
+          echo "machine api.heroku.com login _ password $HEROKU_API_KEY" > ~/.netrc
+          echo "machine git.heroku.com login _ password $HEROKU_API_KEY" >> ~/.netrc
+          chmod 600 ~/.netrc
+          git config --global user.email "ci@gitlab.com"
+          git config --global user.name "GitLab CI"
+          heroku git:remote --app $HEROKU_APP_STAGING
+          git push heroku HEAD:refs/heads/main 2>&1 | tee heroku_push.log
+          STAGING_URL=$(grep 'deployed to Heroku' heroku_push.log | sed -E 's/.*(https:\/\/[^ ]+).*/\1/')
+          echo "STAGING_URL=$STAGING_URL"
+          echo "STAGING_URL=$STAGING_URL" >> $GITHUB_OUTPUT
+
+  functional_tests:
+    needs: deploy_staging
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    env:
+      STAGING_URL: ${{ needs.deploy_staging.outputs.STAGING_URL }}
+      PLAYWRIGHT_HTML_REPORT: playwright-report-staging
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - run: npm ci
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+      - name: Run Playwright tests
+        run: npx playwright test --config=./playwright.staging.config.js
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-staging
+          path: playwright-report-staging
