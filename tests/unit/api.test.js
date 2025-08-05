@@ -7,23 +7,30 @@ vi.mock('heroku-ssl-redirect', () => ({
     }
 }));
 
-vi.mock('pg', () => {
-    const mockQuery = vi.fn().mockResolvedValue({
-        rows: [
-            { date_key: '2025-04-06', name: 'Elder Smith', phone: '555-1234' }
-        ]
-    });
-
+const { mockQuery } = vi.hoisted(() => {
     return {
-        default: {
-            Pool: vi.fn(() => ({
-                query: mockQuery,
-                connect: vi.fn(),
-                end: vi.fn()
-            }))
-        }
+        mockQuery: vi.fn(async (sql) => {
+            if (sql.startsWith('SELECT')) {
+                return {
+                    rows: [
+                        { date_key: '2025-04-06', name: 'Elder Smith', phone: '555-1234' }
+                    ]
+                };
+            }
+            return { rows: [] };
+        })
     };
 });
+
+vi.mock('pg', () => ({
+    default: {
+        Pool: vi.fn(() => ({
+            query: mockQuery,
+            connect: vi.fn(),
+            end: vi.fn()
+        }))
+    }
+}));
 
 import app from '../../app.js';
 
@@ -38,16 +45,21 @@ describe('Missionary Calendar API', () => {
         });
     });
 
-    it('POST /api/signups saves a new signup', async () => {
+    it('POST /api/signups trims whitespace before saving', async () => {
+        mockQuery.mockClear();
         const res = await request(app)
             .post('/api/signups')
             .send({
                 dateKey: '2025-04-07',
-                name: 'Sister Jones',
-                phone: '555-5678'
+                name: '  Sister Jones  ',
+                phone: ' 555-5678 '
             });
 
         expect(res.statusCode).toBe(200);
         expect(res.body.message).toMatch(/Saved sign-up/);
+        expect(mockQuery).toHaveBeenCalledWith(
+            expect.stringMatching(/INSERT INTO signups/),
+            ['2025-04-07', 'Sister Jones', '555-5678']
+        );
     });
 });

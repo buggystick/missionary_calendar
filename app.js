@@ -82,10 +82,16 @@ app.get('/api/signups', async (req, res) => {
  * After updating the DB, broadcast to connected WebSocket clients.
  */
 app.post('/api/signups', async (req, res) => {
-    const { dateKey, name, phone } = req.body;
+    const { dateKey } = req.body;
+    let { name = '', phone = '' } = req.body;
+
     if (!dateKey) {
         return res.status(400).json({ error: 'dateKey is required' });
     }
+
+    // Normalize incoming data
+    name = name.trim();
+    phone = phone.trim();
 
     try {
         if (!name && !phone) {
