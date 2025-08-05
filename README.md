@@ -16,7 +16,7 @@ To allow the workflow to access Heroku, add these repository secrets:
 - `HEROKU_API_KEY` – API key for a Heroku account that can create review apps
 - `HEROKU_PIPELINE` – the name of the Heroku pipeline hosting the review apps
 
-The workflow polls the Heroku API directly for the review app URL, so no additional Heroku CLI plugins are required.
+The workflow uses the Heroku CLI to poll for the review app URL, so no additional Heroku CLI plugins are required.
 
 ## Development
 
