@@ -108,6 +108,43 @@ This repository has been configured to work with GitLab CI/CD and Heroku pipelin
    node app.js
    ```
 
+### Python backend
+
+The Django backend lives alongside the existing Node application and can be used
+to migrate functionality incrementally.
+
+1. Create and activate the virtual environment (already committed to `.gitignore`):
+   ```bash
+   python3 -m venv .venv
+   source .venv/bin/activate
+   ```
+
+2. Install the Python dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Provide Django with a database connection string:
+   ```bash
+   export DATABASE_URL=postgres://username:password@localhost:5432/missionary_calendar
+   ```
+
+4. Run Django management commands as needed, for example to apply migrations:
+   ```bash
+   python manage.py migrate
+   ```
+
+5. Start the Django development server. It defaults to port 8000 and can run in
+   parallel with the Node server or replace it during the migration period:
+   ```bash
+   python manage.py runserver
+   ```
+
+   When running both servers simultaneously, continue to start the Node process
+   on port 3000 while Django listens on port 8000. If you prefer to switch to
+   Django entirely, stop the Node server and expose Django on the desired port
+   using `python manage.py runserver 0.0.0.0:3000`.
+
 ### Running Tests
 
 ```bash
