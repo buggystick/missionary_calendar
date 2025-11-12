@@ -137,4 +137,6 @@ dist
 
 #Jetbrains IDE
 .idea/
-/test-results/.last-run.json
+test-results/
+
+db.sqlite3
