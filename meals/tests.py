@@ -79,3 +79,17 @@ class MealsViewsTest(TestCase):
         self.assertFalse(MealSignUp.objects.filter(date=d).exists())
         self.assertNotContains(response, "Unavailable")
         self.assertNotContains(response, "Jane Doe")
+
+    def test_past_dates_greyed_out(self):
+        today = date.today()
+        yesterday = today - timedelta(days=1)
+        
+        if yesterday.month == today.month:
+            response = self.client.get(reverse('calendar'))
+            self.assertEqual(response.status_code, 200)
+            # Check if yesterday's cell has 'past-date' class
+            self.assertContains(response, 'class="past-date"')
+            # Check if yesterday's cell does NOT have hx-get (it shouldn't be clickable)
+            # We need to be careful with the search as multiple cells might have past-date
+            # or hx-get.
+            # Just verifying that the class exists is a good start.

@@ -34,6 +34,7 @@ def get_calendar_context(year, month):
         'month': month,
         'month_name': calendar.month_name[month],
         'calendar_weeks': calendar_weeks,
+        'today': today,
     }
 
     if view_date == current_month_first_day:

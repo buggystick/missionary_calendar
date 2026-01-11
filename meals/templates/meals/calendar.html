@@ -98,6 +98,15 @@
             color: #721c24;
             cursor: not-allowed;
         }
+        .past-date {
+            background-color: #f2f2f2;
+            color: #999;
+            cursor: default;
+            pointer-events: none;
+        }
+        .past-date .date-num {
+            color: #999;
+        }
         .unavailable .status-text {
             font-weight: bold;
             display: block;
@@ -181,12 +190,16 @@
                             {% for day in week %}
                                 <td 
                                     {% if day.date %}
-                                        hx-get="{% url 'meal_signup_form' %}?date={{ day.date|date:'Y-m-d' }}"
-                                        hx-target="#modal-content"
-                                        hx-trigger="click"
-                                        onclick="document.getElementById('modal-overlay').style.display='flex'"
-                                        class="{% if day.signup %}{% if day.signup.is_unavailable %}unavailable{% else %}signed-up{% endif %}{% endif %}"
-                                        id="cell-{{ day.date|date:'Y-m-d' }}"
+                                        {% if day.date < today %}
+                                            class="past-date"
+                                        {% else %}
+                                            hx-get="{% url 'meal_signup_form' %}?date={{ day.date|date:'Y-m-d' }}"
+                                            hx-target="#modal-content"
+                                            hx-trigger="click"
+                                            onclick="document.getElementById('modal-overlay').style.display='flex'"
+                                            class="{% if day.signup %}{% if day.signup.is_unavailable %}unavailable{% else %}signed-up{% endif %}{% endif %}"
+                                            id="cell-{{ day.date|date:'Y-m-d' }}"
+                                        {% endif %}
                                     {% endif %}
                                 >
                                     {% if day.date %}
