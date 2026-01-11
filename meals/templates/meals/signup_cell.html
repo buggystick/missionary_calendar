@@ -1,0 +1,6 @@
+<div class="date-num">{{ signup.date.day }}</div>
+<span class="name">{{ signup.name }}</span>
+<span class="phone">{{ signup.phone }}</span>
+<script>
+    document.getElementById('cell-{{ signup.date|date:"Y-m-d" }}').classList.add('signed-up');
+</script>
