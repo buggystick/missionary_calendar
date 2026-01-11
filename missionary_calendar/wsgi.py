@@ -9,6 +9,12 @@ https://docs.djangoproject.com/en/6.0/howto/deployment/wsgi/
 
 import os
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
+
 from django.core.wsgi import get_wsgi_application
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'missionary_calendar.settings')
