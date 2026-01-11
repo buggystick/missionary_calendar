@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
+from django.core.mail import send_mail
 from .models import MealSignUp
 import calendar
 from datetime import date, timedelta
@@ -71,11 +72,24 @@ def meal_signup_submit(request):
     d = date.fromisoformat(date_str)
     name = request.POST.get('name', '')
     phone = request.POST.get('phone', '')
+    email = request.POST.get('email', '')
     is_unavailable = request.POST.get('is_unavailable') == 'on'
     
     if not is_unavailable and not name and not phone:
         # If it's not unavailable and name/phone are empty, we revert to default (delete)
         MealSignUp.objects.filter(date=d).delete()
+        
+        # Immediate notification for changes in the current week
+        today = date.today()
+        if today <= d <= today + timedelta(days=7):
+            send_mail(
+                'Missionary Meal Cancelled',
+                f'The meal appointment for {d} has been cancelled.',
+                'from@example.com',
+                ['missionaries@example.com'],
+                fail_silently=True,
+            )
+            
         return render(request, 'meals/signup_cell.html', {'signup': None, 'date': d})
 
     signup, created = MealSignUp.objects.update_or_create(
@@ -83,8 +97,21 @@ def meal_signup_submit(request):
         defaults={
             'name': name if not is_unavailable else '',
             'phone': phone if not is_unavailable else '',
+            'email': email if not is_unavailable else '',
             'is_unavailable': is_unavailable
         }
     )
+    
+    # Immediate notification for changes in the current week
+    today = date.today()
+    if today <= d <= today + timedelta(days=7):
+        status = "marked as unavailable" if is_unavailable else f"signed up by {name} ({phone})"
+        send_mail(
+            'Missionary Meal Update',
+            f'An appointment for {d} has been updated: {status}',
+            'from@example.com',
+            ['missionaries@example.com'],
+            fail_silently=True,
+        )
     
     return render(request, 'meals/signup_cell.html', {'signup': signup})
