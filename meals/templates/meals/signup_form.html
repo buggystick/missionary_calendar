@@ -1,12 +1,8 @@
 <h2>Sign up for {{ date|date:"F j, Y" }}</h2>
-<form hx-post="{% url 'meal_signup_submit' %}?date={{ date|date:'Y-m-d' }}" hx-target="#cell-{{ date|date:'Y-m-d' }}" hx-swap="innerHTML" onsubmit="closeModal()">
+<form id="signup-form" hx-post="{% url 'meal_signup_submit' %}?date={{ date|date:'Y-m-d' }}" hx-target="#cell-{{ date|date:'Y-m-d' }}" hx-swap="innerHTML" onsubmit="closeModal()">
     {% csrf_token %}
-    <div class="form-group">
-        <label>
-            <input type="checkbox" name="is_unavailable" id="id_is_unavailable" {% if signup.is_unavailable %}checked{% endif %} 
-                   onchange="toggleFields(this.checked)"> Mark as Unavailable
-        </label>
-    </div>
+    <input type="hidden" name="is_unavailable" id="id_is_unavailable" value="{% if signup.is_unavailable %}on{% endif %}">
+    
     <div id="signup-fields" {% if signup.is_unavailable %}style="display:none"{% endif %}>
         <div class="form-group">
             <label for="id_name">Name:</label>
@@ -17,28 +13,62 @@
             <input type="text" name="phone" id="id_phone" value="{{ signup.phone|default:'' }}">
         </div>
     </div>
+
+    {% if signup.is_unavailable %}
+    <div id="unavailable-message" style="color: #721c24; margin-bottom: 1em;">
+        This date is currently marked as unavailable.
+    </div>
+    {% endif %}
+
     <div class="modal-buttons">
         <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button type="submit" class="btn-save">Save</button>
+        {% if signup.is_unavailable %}
+            <button type="button" class="btn-save" onclick="markAvailable()">Make Available</button>
+        {% else %}
+            <button type="button" style="background: #f44336; color: white; border: none; border-radius: 4px; margin-right: 0.5em; padding: 0.5em 1em; cursor: pointer;" onclick="markUnavailable()">Unavailable</button>
+            <button type="submit" class="btn-save">Save</button>
+        {% endif %}
     </div>
 </form>
 
 <script>
-function toggleFields(isUnavailable) {
-    const fields = document.getElementById('signup-fields');
-    const nameInput = document.getElementById('id_name');
-    const phoneInput = document.getElementById('id_phone');
-    
-    if (isUnavailable) {
-        fields.style.display = 'none';
-        nameInput.required = false;
-        phoneInput.required = false;
-    } else {
-        fields.style.display = 'block';
-        nameInput.required = true;
-        phoneInput.required = true;
-    }
+function markUnavailable() {
+    document.getElementById('id_is_unavailable').value = 'on';
+    document.getElementById('signup-form').requestSubmit();
 }
-// Initialize required attributes on load
-toggleFields(document.getElementById('id_is_unavailable').checked);
+
+function markAvailable() {
+    document.getElementById('id_is_unavailable').value = '';
+    // Show fields so user can fill them if they want, or just submit to clear it
+    document.getElementById('signup-fields').style.display = 'block';
+    document.getElementById('unavailable-message').style.display = 'none';
+    
+    // Change buttons back to Save/Cancel
+    const buttonsDiv = document.querySelector('.modal-buttons');
+    buttonsDiv.innerHTML = `
+        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+        <button type="button" style="background: #f44336; color: white; border: none; border-radius: 4px; margin-right: 0.5em; padding: 0.5em 1em; cursor: pointer;" onclick="markUnavailable()">Unavailable</button>
+        <button type="submit" class="btn-save">Save</button>
+    `;
+}
+
+function validateForm() {
+    const isUnavailable = document.getElementById('id_is_unavailable').value === 'on';
+    if (!isUnavailable) {
+        const name = document.getElementById('id_name').value;
+        const phone = document.getElementById('id_phone').value;
+        if (!name || !phone) {
+            alert('Please enter both name and phone number.');
+            return false;
+        }
+    }
+    return true;
+}
+
+document.getElementById('signup-form').addEventListener('submit', function(e) {
+    if (!validateForm()) {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+    }
+});
 </script>
