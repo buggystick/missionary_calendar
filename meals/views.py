@@ -72,6 +72,11 @@ def meal_signup_submit(request):
     phone = request.POST.get('phone', '')
     is_unavailable = request.POST.get('is_unavailable') == 'on'
     
+    if not is_unavailable and not name and not phone:
+        # If it's not unavailable and name/phone are empty, we revert to default (delete)
+        MealSignUp.objects.filter(date=d).delete()
+        return render(request, 'meals/signup_cell.html', {'signup': None, 'date': d})
+
     signup, created = MealSignUp.objects.update_or_create(
         date=d,
         defaults={

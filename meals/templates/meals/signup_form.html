@@ -39,24 +39,18 @@ function markUnavailable() {
 
 function markAvailable() {
     document.getElementById('id_is_unavailable').value = '';
-    // Show fields so user can fill them if they want, or just submit to clear it
-    document.getElementById('signup-fields').style.display = 'block';
-    document.getElementById('unavailable-message').style.display = 'none';
-    
-    // Change buttons back to Save/Cancel
-    const buttonsDiv = document.querySelector('.modal-buttons');
-    buttonsDiv.innerHTML = `
-        <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
-        <button type="button" style="background: #f44336; color: white; border: none; border-radius: 4px; margin-right: 0.5em; padding: 0.5em 1em; cursor: pointer;" onclick="markUnavailable()">Unavailable</button>
-        <button type="submit" class="btn-save">Save</button>
-    `;
+    // Submit immediately to clear the unavailable status and revert to default state
+    document.getElementById('signup-form').requestSubmit();
 }
 
 function validateForm() {
     const isUnavailable = document.getElementById('id_is_unavailable').value === 'on';
-    if (!isUnavailable) {
-        const name = document.getElementById('id_name').value;
-        const phone = document.getElementById('id_phone').value;
+    const name = document.getElementById('id_name').value;
+    const phone = document.getElementById('id_phone').value;
+
+    // If it's NOT unavailable and there is some input, then both must be present
+    // If both are empty, we allow it (it will clear the signup)
+    if (!isUnavailable && (name || phone)) {
         if (!name || !phone) {
             alert('Please enter both name and phone number.');
             return false;

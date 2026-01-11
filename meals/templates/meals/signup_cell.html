@@ -1,12 +1,16 @@
-<div class="date-num">{{ signup.date.day }}</div>
-{% if signup.is_unavailable %}
-    <span class="status-text">Unavailable</span>
-{% else %}
-    <span class="name">{{ signup.name }}</span>
-    <span class="phone">{{ signup.phone }}</span>
+<div class="date-num">{% if signup %}{{ signup.date.day }}{% else %}{{ date.day }}{% endif %}</div>
+{% if signup %}
+    {% if signup.is_unavailable %}
+        <span class="status-text">Unavailable</span>
+    {% else %}
+        <span class="name">{{ signup.name }}</span>
+        <span class="phone">{{ signup.phone }}</span>
+    {% endif %}
 {% endif %}
 <script>
-    var cell = document.getElementById('cell-{{ signup.date|date:"Y-m-d" }}');
+    var cell = document.getElementById('cell-{% if signup %}{{ signup.date|date:"Y-m-d" }}{% else %}{{ date|date:"Y-m-d" }}{% endif %}');
     cell.classList.remove('signed-up', 'unavailable');
-    cell.classList.add('{% if signup.is_unavailable %}unavailable{% else %}signed-up{% endif %}');
+    {% if signup %}
+        cell.classList.add('{% if signup.is_unavailable %}unavailable{% else %}signed-up{% endif %}');
+    {% endif %}
 </script>

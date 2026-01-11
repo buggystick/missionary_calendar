@@ -68,14 +68,14 @@ class MealsViewsTest(TestCase):
         # First mark as unavailable
         MealSignUp.objects.create(date=d, is_unavailable=True)
         
-        # Then make available by submitting without is_unavailable='on' and providing details
+        # Then make available by submitting without is_unavailable='on' and without details
         response = self.client.post(reverse('meal_signup_submit') + f'?date={d.isoformat()}', {
             'is_unavailable': '',
-            'name': 'Jane Doe',
-            'phone': '987-654-3210'
+            'name': '',
+            'phone': ''
         })
         self.assertEqual(response.status_code, 200)
-        signup = MealSignUp.objects.get(date=d)
-        self.assertFalse(signup.is_unavailable)
-        self.assertEqual(signup.name, 'Jane Doe')
-        self.assertContains(response, "Jane Doe")
+        # Record should be deleted (or at least not unavailable and no name)
+        self.assertFalse(MealSignUp.objects.filter(date=d).exists())
+        self.assertNotContains(response, "Unavailable")
+        self.assertNotContains(response, "Jane Doe")
