@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from django.core.mail import send_mail
+from django.conf import settings
 from .models import MealSignUp
 import calendar
 from datetime import date, timedelta
@@ -85,8 +86,8 @@ def meal_signup_submit(request):
             send_mail(
                 'Missionary Meal Cancelled',
                 f'The meal appointment for {d} has been cancelled.',
-                'from@example.com',
-                ['missionaries@example.com'],
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.MISSIONARY_EMAIL],
                 fail_silently=True,
             )
             
@@ -109,8 +110,8 @@ def meal_signup_submit(request):
         send_mail(
             'Missionary Meal Update',
             f'An appointment for {d} has been updated: {status}',
-            'from@example.com',
-            ['missionaries@example.com'],
+            settings.DEFAULT_FROM_EMAIL,
+            [settings.MISSIONARY_EMAIL],
             fail_silently=True,
         )
     

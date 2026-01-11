@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.core.mail import send_mail
+from django.conf import settings
 from datetime import date, timedelta
 from meals.models import MealSignUp
 
@@ -17,7 +18,7 @@ class Command(BaseCommand):
             send_mail(
                 'Missionary Meal Reminder',
                 f'Hi {signup.name},\n\nThis is a reminder that you are signed up to feed the missionaries tomorrow, {tomorrow.strftime("%A, %B %d")}.\n\nThank you!',
-                'from@example.com',
+                settings.DEFAULT_FROM_EMAIL,
                 [signup.email],
                 fail_silently=False,
             )
@@ -54,7 +55,7 @@ class Command(BaseCommand):
             send_mail(
                 'Weekly Missionary Meal Summary',
                 summary_text,
-                'from@example.com',
-                ['missionaries@example.com'],
+                settings.DEFAULT_FROM_EMAIL,
+                [settings.MISSIONARY_EMAIL],
                 fail_silently=False,
             )
