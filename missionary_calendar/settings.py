@@ -139,6 +139,7 @@ EMAIL_USE_TLS = os.environ.get('DJANGO_EMAIL_USE_TLS', 'True') == 'True'
 EMAIL_HOST_USER = os.environ.get('DJANGO_EMAIL_HOST_USER', '')
 EMAIL_HOST_PASSWORD = os.environ.get('DJANGO_EMAIL_HOST_PASSWORD', '')
 DEFAULT_FROM_EMAIL = os.environ.get('DJANGO_DEFAULT_FROM_EMAIL', 'Missionary Calendar <no-reply@example.com>')
+EMAIL_FILE_PATH = os.environ.get('DJANGO_EMAIL_FILE_PATH', BASE_DIR / 'sent_emails')
 
 # Missionary Notification Settings
 MISSIONARY_EMAIL = os.environ.get('MISSIONARY_EMAIL', 'missionaries@example.com')
