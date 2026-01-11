@@ -106,6 +106,8 @@ class MealsViewsTest(TestCase):
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, 'Missionary Meal Update')
         self.assertIn('Email User (555-0199)', mail.outbox[0].body)
+        # Check for HTML content
+        self.assertTrue(any(alt[1] == 'text/html' for alt in mail.outbox[0].alternatives))
 
     def test_signup_cancel_notification(self):
         d = date.today() + timedelta(days=2)
@@ -120,6 +122,8 @@ class MealsViewsTest(TestCase):
         self.assertFalse(MealSignUp.objects.filter(date=d).exists())
         self.assertEqual(len(mail.outbox), 1)
         self.assertEqual(mail.outbox[0].subject, 'Missionary Meal Cancelled')
+        # Check for HTML content
+        self.assertTrue(any(alt[1] == 'text/html' for alt in mail.outbox[0].alternatives))
 
     def test_management_command_reminder(self):
         tomorrow = date.today() + timedelta(days=1)
@@ -134,6 +138,8 @@ class MealsViewsTest(TestCase):
         self.assertEqual(len(reminder_emails), 1)
         self.assertEqual(reminder_emails[0].to, ['tomorrow@example.com'])
         self.assertIn('Tomorrow Person', reminder_emails[0].body)
+        # Check for HTML content
+        self.assertTrue(any(alt[1] == 'text/html' for alt in reminder_emails[0].alternatives))
 
     def test_management_command_weekly_summary(self):
         # We need to simulate today being Sunday
@@ -152,3 +158,5 @@ class MealsViewsTest(TestCase):
             summary_emails = [m for m in mail.outbox if m.subject == 'Weekly Missionary Meal Summary']
             self.assertEqual(len(summary_emails), 1)
             self.assertIn('Monday Person (111)', summary_emails[0].body)
+            # Check for HTML content
+            self.assertTrue(any(alt[1] == 'text/html' for alt in summary_emails[0].alternatives))

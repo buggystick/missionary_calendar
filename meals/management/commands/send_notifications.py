@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
-from django.core.mail import send_mail
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 from django.conf import settings
 from datetime import date, timedelta
 from meals.models import MealSignUp
@@ -15,13 +16,15 @@ class Command(BaseCommand):
         tomorrow_signups = MealSignUp.objects.filter(date=tomorrow, is_unavailable=False).exclude(email='')
         for signup in tomorrow_signups:
             self.stdout.write(f"Sending reminder to {signup.email} for {tomorrow}")
-            send_mail(
-                'Missionary Meal Reminder',
-                f'Hi {signup.name},\n\nThis is a reminder that you are signed up to feed the missionaries tomorrow, {tomorrow.strftime("%A, %B %d")}.\n\nThank you!',
-                settings.DEFAULT_FROM_EMAIL,
-                [signup.email],
-                fail_silently=False,
-            )
+            subject = 'Missionary Meal Reminder'
+            text_content = f'Hi {signup.name},\n\nThis is a reminder that you are signed up to feed the missionaries tomorrow, {tomorrow.strftime("%A, %B %d")}.\n\nThank you!'
+            html_content = render_to_string('meals/emails/user_reminder.html', {
+                'name': signup.name,
+                'date': tomorrow,
+            })
+            msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [signup.email])
+            msg.attach_alternative(html_content, "text/html")
+            msg.send(fail_silently=False)
 
         # 2. Weekly summary for missionaries (Run on Sunday evening)
         # Note: If running via cron, ensure it runs once on Sunday.
@@ -52,10 +55,33 @@ class Command(BaseCommand):
             
             summary_text = "\n".join(summary_lines)
             
-            send_mail(
-                'Weekly Missionary Meal Summary',
-                summary_text,
-                settings.DEFAULT_FROM_EMAIL,
-                [settings.MISSIONARY_EMAIL],
-                fail_silently=False,
-            )
+            # Prepare schedule for HTML template
+            schedule_data = []
+            for i in range(1, 8):
+                d = today + timedelta(days=i)
+                s = signups_by_date.get(d)
+                if s:
+                    schedule_data.append({
+                        'date': d,
+                        'is_unavailable': s.is_unavailable,
+                        'name': s.name,
+                        'phone': s.phone
+                    })
+                else:
+                    schedule_data.append({
+                        'date': d,
+                        'is_unavailable': False,
+                        'name': None
+                    })
+
+            html_content = render_to_string('meals/emails/weekly_summary.html', {
+                'start_date': next_monday,
+                'end_date': next_sunday,
+                'schedule': schedule_data,
+                'calendar_url': 'https://missionaries.farmingtonward.church' # Use settings if available, or a placeholder
+            })
+            
+            subject = 'Weekly Missionary Meal Summary'
+            msg = EmailMultiAlternatives(subject, summary_text, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL])
+            msg.attach_alternative(html_content, "text/html")
+            msg.send(fail_silently=False)

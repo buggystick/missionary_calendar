@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { width: 90%; max-width: 600px; margin: 20px auto; border: 1px solid #ddd; border-radius: 8px; padding: 20px; }
+        .header { background: #4CAF50; color: white; padding: 10px; border-radius: 6px 6px 0 0; text-align: center; }
+        .content { padding: 20px; }
+        .footer { font-size: 0.8em; color: #777; text-align: center; border-top: 1px solid #eee; padding-top: 10px; margin-top: 20px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>Missionary Meal Reminder</h2>
+        </div>
+        <div class="content">
+            <p>Hi {{ name }},</p>
+            <p>This is a friendly reminder that you are signed up to feed the missionaries tomorrow:</p>
+            <p style="font-size: 1.2em; font-weight: bold; color: #4CAF50;">{{ date|date:"l, F j" }}</p>
+            <p>Thank you so much for your service!</p>
+        </div>
+        <div class="footer">
+            <p>Missionary Meal Calendar - {{ ward_name|default:"Farmington Ward" }}</p>
+        </div>
+    </div>
+</body>
+</html>
