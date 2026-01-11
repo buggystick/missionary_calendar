@@ -41,3 +41,4 @@ Thumbs.db
 # Project specific
 .output.txt
 original_page.html
+.env
