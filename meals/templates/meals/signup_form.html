@@ -2,15 +2,43 @@
 <form hx-post="{% url 'meal_signup_submit' %}?date={{ date|date:'Y-m-d' }}" hx-target="#cell-{{ date|date:'Y-m-d' }}" hx-swap="innerHTML" onsubmit="closeModal()">
     {% csrf_token %}
     <div class="form-group">
-        <label for="id_name">Name:</label>
-        <input type="text" name="name" id="id_name" value="{{ signup.name|default:'' }}" required>
+        <label>
+            <input type="checkbox" name="is_unavailable" id="id_is_unavailable" {% if signup.is_unavailable %}checked{% endif %} 
+                   onchange="toggleFields(this.checked)"> Mark as Unavailable
+        </label>
     </div>
-    <div class="form-group">
-        <label for="id_phone">Phone:</label>
-        <input type="text" name="phone" id="id_phone" value="{{ signup.phone|default:'' }}" required>
+    <div id="signup-fields" {% if signup.is_unavailable %}style="display:none"{% endif %}>
+        <div class="form-group">
+            <label for="id_name">Name:</label>
+            <input type="text" name="name" id="id_name" value="{{ signup.name|default:'' }}">
+        </div>
+        <div class="form-group">
+            <label for="id_phone">Phone:</label>
+            <input type="text" name="phone" id="id_phone" value="{{ signup.phone|default:'' }}">
+        </div>
     </div>
     <div class="modal-buttons">
         <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
         <button type="submit" class="btn-save">Save</button>
     </div>
 </form>
+
+<script>
+function toggleFields(isUnavailable) {
+    const fields = document.getElementById('signup-fields');
+    const nameInput = document.getElementById('id_name');
+    const phoneInput = document.getElementById('id_phone');
+    
+    if (isUnavailable) {
+        fields.style.display = 'none';
+        nameInput.required = false;
+        phoneInput.required = false;
+    } else {
+        fields.style.display = 'block';
+        nameInput.required = true;
+        phoneInput.required = true;
+    }
+}
+// Initialize required attributes on load
+toggleFields(document.getElementById('id_is_unavailable').checked);
+</script>

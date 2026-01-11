@@ -1,6 +1,12 @@
 <div class="date-num">{{ signup.date.day }}</div>
-<span class="name">{{ signup.name }}</span>
-<span class="phone">{{ signup.phone }}</span>
+{% if signup.is_unavailable %}
+    <span class="status-text">Unavailable</span>
+{% else %}
+    <span class="name">{{ signup.name }}</span>
+    <span class="phone">{{ signup.phone }}</span>
+{% endif %}
 <script>
-    document.getElementById('cell-{{ signup.date|date:"Y-m-d" }}').classList.add('signed-up');
+    var cell = document.getElementById('cell-{{ signup.date|date:"Y-m-d" }}');
+    cell.classList.remove('signed-up', 'unavailable');
+    cell.classList.add('{% if signup.is_unavailable %}unavailable{% else %}signed-up{% endif %}');
 </script>

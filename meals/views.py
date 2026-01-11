@@ -23,19 +23,33 @@ def get_calendar_context(year, month):
                 week_days.append({'date': None})
         calendar_weeks.append(week_days)
     
-    # Prev/Next month logic
-    first_day = date(year, month, 1)
-    prev_month_date = first_day - timedelta(days=1)
-    next_month_date = (first_day + timedelta(days=32)).replace(day=1)
+    today = date.today()
+    current_month_first_day = today.replace(day=1)
+    next_month_first_day = (current_month_first_day + timedelta(days=32)).replace(day=1)
     
-    return {
+    view_date = date(year, month, 1)
+    
+    context = {
         'year': year,
         'month': month,
         'month_name': calendar.month_name[month],
         'calendar_weeks': calendar_weeks,
-        'prev_month': {'year': prev_month_date.year, 'month': prev_month_date.month},
-        'next_month': {'year': next_month_date.year, 'month': next_month_date.month},
     }
+
+    if view_date == current_month_first_day:
+        context['nav_link'] = {
+            'year': next_month_first_day.year,
+            'month': next_month_first_day.month,
+            'label': 'Next Month'
+        }
+    elif view_date == next_month_first_day:
+        context['nav_link'] = {
+            'year': current_month_first_day.year,
+            'month': current_month_first_day.month,
+            'label': 'Previous Month'
+        }
+    
+    return context
 
 def calendar_view(request):
     today = date.today()
@@ -54,12 +68,17 @@ def meal_signup_form(request):
 def meal_signup_submit(request):
     date_str = request.GET.get('date')
     d = date.fromisoformat(date_str)
-    name = request.POST.get('name')
-    phone = request.POST.get('phone')
+    name = request.POST.get('name', '')
+    phone = request.POST.get('phone', '')
+    is_unavailable = request.POST.get('is_unavailable') == 'on'
     
     signup, created = MealSignUp.objects.update_or_create(
         date=d,
-        defaults={'name': name, 'phone': phone}
+        defaults={
+            'name': name if not is_unavailable else '',
+            'phone': phone if not is_unavailable else '',
+            'is_unavailable': is_unavailable
+        }
     )
     
     return render(request, 'meals/signup_cell.html', {'signup': signup})

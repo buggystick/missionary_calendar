@@ -93,6 +93,16 @@
         .signed-up {
             background-color: #d4edda;
         }
+        .unavailable {
+            background-color: #f8d7da;
+            color: #721c24;
+            cursor: not-allowed;
+        }
+        .unavailable .status-text {
+            font-weight: bold;
+            display: block;
+            margin-top: 10px;
+        }
         .signed-up .name {
             font-weight: bold;
             color: #155724;
@@ -145,11 +155,8 @@
     <h1>Missionary Meal Calendar</h1>
 
     <div class="month-nav">
-        {% if prev_month %}
-            <a href="?year={{ prev_month.year }}&month={{ prev_month.month }}" class="secondary">Previous Month</a>
-        {% endif %}
-        {% if next_month %}
-            <a href="?year={{ next_month.year }}&month={{ next_month.month }}">Next Month</a>
+        {% if nav_link %}
+            <a href="?year={{ nav_link.year }}&month={{ nav_link.month }}" {% if nav_link.label == 'Previous Month' %}class="secondary"{% endif %}>{{ nav_link.label }}</a>
         {% endif %}
     </div>
 
@@ -178,17 +185,21 @@
                                         hx-target="#modal-content"
                                         hx-trigger="click"
                                         onclick="document.getElementById('modal-overlay').style.display='flex'"
-                                        class="{% if day.signup %}signed-up{% endif %}"
+                                        class="{% if day.signup %}{% if day.signup.is_unavailable %}unavailable{% else %}signed-up{% endif %}{% endif %}"
                                         id="cell-{{ day.date|date:'Y-m-d' }}"
                                     {% endif %}
                                 >
                                     {% if day.date %}
                                         <div class="date-num">{{ day.date.day }}</div>
                                         {% if day.signup %}
-                                            <span class="name">{{ day.signup.name }}</span>
-                                            <span class="phone">{{ day.signup.phone }}</span>
+                                            {% if day.signup.is_unavailable %}
+                                                <span class="status-text">Unavailable</span>
+                                            {% else %}
+                                                <span class="name">{{ day.signup.name }}</span>
+                                                <span class="phone">{{ day.signup.phone }}</span>
+                                            {% endif %}
                                         {% else %}
-                                            <span class="not-signed-up">Available</span>
+                                            <!-- Available (blank as requested) -->
                                         {% endif %}
                                     {% endif %}
                                 </td>
