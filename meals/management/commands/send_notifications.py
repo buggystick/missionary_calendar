@@ -3,6 +3,7 @@ from django.core.mail import EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
 from datetime import date, timedelta
+import time
 from meals.models import MealSignUp
 
 class Command(BaseCommand):
@@ -99,6 +100,7 @@ class Command(BaseCommand):
 
     def send_test_emails(self):
         self.stdout.write("Sending test emails of all types...")
+        self.stdout.write("(Adding 10-second delay between emails for Mailtrap rate limiting)")
         test_date = date.today() + timedelta(days=1)
         test_email = settings.MISSIONARY_EMAIL # Use missionary email as the recipient for all test emails
         
@@ -113,6 +115,8 @@ class Command(BaseCommand):
         msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [test_email])
         msg.attach_alternative(html_content, "text/html")
         msg.send()
+
+        time.sleep(10)
 
         # 2. Test Missionary Update (Sign up)
         self.stdout.write(f"- Sending sample Missionary Update (Sign up) to {settings.MISSIONARY_EMAIL}")
@@ -131,6 +135,8 @@ class Command(BaseCommand):
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 
+        time.sleep(10)
+
         # 3. Test Missionary Update (Cancellation)
         self.stdout.write(f"- Sending sample Missionary Update (Cancellation) to {settings.MISSIONARY_EMAIL}")
         subject = '[TEST] Missionary Meal Cancelled'
@@ -143,6 +149,8 @@ class Command(BaseCommand):
         msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL])
         msg.attach_alternative(html_content, "text/html")
         msg.send()
+
+        time.sleep(10)
 
         # 4. Test Weekly Summary
         self.stdout.write(f"- Sending sample Weekly Summary to {settings.MISSIONARY_EMAIL}")
