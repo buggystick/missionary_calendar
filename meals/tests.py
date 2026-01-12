@@ -8,6 +8,24 @@ from datetime import date, timedelta, datetime
 import calendar
 from django.core.management import call_command
 from io import StringIO
+from .utils import format_phone_number, is_valid_phone_number
+
+class PhoneUtilityTest(TestCase):
+    def test_phone_formatting(self):
+        self.assertEqual(format_phone_number('8015551234'), '(801) 555-1234')
+        self.assertEqual(format_phone_number('801-555-1234'), '(801) 555-1234')
+        self.assertEqual(format_phone_number('(801) 555-1234'), '(801) 555-1234')
+        # International (if it starts with +)
+        self.assertEqual(format_phone_number('+442079460958'), '+44 20 7946 0958')
+        # Garbage should return as is
+        self.assertEqual(format_phone_number('garbage'), 'garbage')
+
+    def test_phone_validation(self):
+        self.assertTrue(is_valid_phone_number('8015551234'))
+        self.assertTrue(is_valid_phone_number('801-555-1234'))
+        self.assertTrue(is_valid_phone_number('+44 20 7946 0958'))
+        self.assertFalse(is_valid_phone_number('12345'))
+        self.assertFalse(is_valid_phone_number('abcdefghij'))
 
 class MealsViewsTest(TestCase):
     def test_calendar_view(self):
@@ -51,12 +69,14 @@ class MealsViewsTest(TestCase):
         d = date(2026, 1, 15)
         response = self.client.post(reverse('meal_signup_submit') + f'?date={d.isoformat()}', {
             'name': 'John Doe',
-            'phone': '123-456-7890'
+            'phone': '801-555-1234'
         })
         self.assertEqual(response.status_code, 200)
         self.assertTrue(MealSignUp.objects.filter(date=d, name='John Doe', is_unavailable=False).exists())
+        signup = MealSignUp.objects.get(date=d)
+        self.assertEqual(signup.phone, '(801) 555-1234')
         self.assertContains(response, "John Doe")
-        self.assertContains(response, "123-456-7890")
+        self.assertContains(response, "(801) 555-1234")
 
     def test_signup_unavailable_submit(self):
         d = date(2026, 1, 16)
@@ -167,13 +187,13 @@ class MealsViewsTest(TestCase):
             pass
         else:
             next_monday = today + timedelta(days=1)
-            MealSignUp.objects.create(date=next_monday, name='Monday Person', phone='111')
+            MealSignUp.objects.create(date=next_monday, name='Monday Person', phone='8015551234')
             
             out = StringIO()
             call_command('send_notifications', stdout=out)
             
             summary_emails = [m for m in mail.outbox if m.subject == 'Weekly Missionary Meal Summary']
             self.assertEqual(len(summary_emails), 1)
-            self.assertIn('Monday Person (111)', summary_emails[0].body)
+            self.assertIn('Monday Person ((801) 555-1234)', summary_emails[0].body)
             # Check for HTML content
             self.assertTrue(any(alt[1] == 'text/html' for alt in summary_emails[0].alternatives))

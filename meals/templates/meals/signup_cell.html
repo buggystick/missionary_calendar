@@ -1,10 +1,11 @@
+{% load meal_tags %}
 <div class="date-num">{% if signup %}{{ signup.date.day }}{% else %}{{ date.day }}{% endif %}</div>
 {% if signup %}
     {% if signup.is_unavailable %}
         <span class="status-text">Unavailable</span>
     {% else %}
         <span class="name">{{ signup.name }}</span>
-        <span class="phone">{{ signup.phone }}</span>
+        <span class="phone">{{ signup.phone|format_phone }}</span>
     {% endif %}
 {% endif %}
 <script>

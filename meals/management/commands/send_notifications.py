@@ -5,6 +5,7 @@ from django.conf import settings
 from datetime import date, timedelta
 import time
 from meals.models import MealSignUp
+from meals.utils import format_phone_number
 
 class Command(BaseCommand):
     help = 'Sends meal reminders to users and weekly summaries to missionaries.'
@@ -62,7 +63,8 @@ class Command(BaseCommand):
                     if s.is_unavailable:
                         line = f"{d.strftime('%A, %b %d')}: UNAVAILABLE"
                     else:
-                        line = f"{d.strftime('%A, %b %d')}: {s.name} ({s.phone})"
+                        formatted_phone = format_phone_number(s.phone)
+                        line = f"{d.strftime('%A, %b %d')}: {s.name} ({formatted_phone})"
                 else:
                     line = f"{d.strftime('%A, %b %d')}: Available"
                 summary_lines.append(line)
@@ -79,7 +81,7 @@ class Command(BaseCommand):
                         'date': d,
                         'is_unavailable': s.is_unavailable,
                         'name': s.name,
-                        'phone': s.phone
+                        'phone': format_phone_number(s.phone)
                     })
                 else:
                     schedule_data.append({

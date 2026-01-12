@@ -1,4 +1,4 @@
-{% load static %}
+{% load static meal_tags %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -241,7 +241,7 @@
                                                 <span class="status-text">Unavailable</span>
                                             {% else %}
                                                 <span class="name">{{ day.signup.name }}</span>
-                                                <span class="phone">{{ day.signup.phone }}</span>
+                                                <span class="phone">{{ day.signup.phone|format_phone }}</span>
                                             {% endif %}
                                         {% else %}
                                             <!-- Available (blank as requested) -->
