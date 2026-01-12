@@ -99,7 +99,7 @@ class MealsViewsTest(TestCase):
         d = date.today() + timedelta(days=5)
         # Mock time to NOT be Sunday morning
         with patch('django.utils.timezone.now') as mock_now:
-            mock_now.return_value = datetime(2026, 1, 12, 12, 0) # Monday
+            mock_now.return_value = timezone.make_aware(datetime(2026, 1, 12, 12, 0)) # Monday
             response = self.client.post(reverse('meal_signup_submit') + f'?date={d.isoformat()}', {
                 'name': 'Email User',
                 'phone': '555-0199',
@@ -112,10 +112,11 @@ class MealsViewsTest(TestCase):
 
     def test_signup_submit_sunday_suppression(self):
         d = date.today() + timedelta(days=2)
-        # Mock time to be Sunday 10 AM
+        # Mock time to be Sunday 10 AM in America/Los_Angeles
         with patch('django.utils.timezone.now') as mock_now:
-            # We need to make sure the mocked 'now' is a Sunday
             # 2026-01-11 is a Sunday
+            # We mock a UTC time that corresponds to Sunday 10 AM PST (UTC-8) -> 6 PM UTC
+            # Or just use make_aware with a naive datetime and it will use the default TIME_ZONE
             mock_now.return_value = timezone.make_aware(datetime(2026, 1, 11, 10, 0))
             response = self.client.post(reverse('meal_signup_submit') + f'?date={d.isoformat()}', {
                 'name': 'Sunday User',
