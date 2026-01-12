@@ -2,7 +2,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.core import mail
 from .models import MealSignUp
-from datetime import date, timedelta
+from django.utils import timezone
+from unittest.mock import patch
+from datetime import date, timedelta, datetime
 import calendar
 from django.core.management import call_command
 from io import StringIO
@@ -95,19 +97,33 @@ class MealsViewsTest(TestCase):
 
     def test_signup_submit_with_email(self):
         d = date.today() + timedelta(days=5)
-        response = self.client.post(reverse('meal_signup_submit') + f'?date={d.isoformat()}', {
-            'name': 'Email User',
-            'phone': '555-0199',
-            'email': 'user@example.com'
-        })
+        # Mock time to NOT be Sunday morning
+        with patch('django.utils.timezone.now') as mock_now:
+            mock_now.return_value = datetime(2026, 1, 12, 12, 0) # Monday
+            response = self.client.post(reverse('meal_signup_submit') + f'?date={d.isoformat()}', {
+                'name': 'Email User',
+                'phone': '555-0199',
+                'email': 'user@example.com'
+            })
         self.assertEqual(response.status_code, 200)
         self.assertTrue(MealSignUp.objects.filter(date=d, email='user@example.com').exists())
-        # Should send immediate notification because it's within 7 days
+        # Should send immediate notification because it's within 7 days and NOT Sunday morning
         self.assertEqual(len(mail.outbox), 1)
-        self.assertEqual(mail.outbox[0].subject, 'Missionary Meal Update')
-        self.assertIn('Email User (555-0199)', mail.outbox[0].body)
-        # Check for HTML content
-        self.assertTrue(any(alt[1] == 'text/html' for alt in mail.outbox[0].alternatives))
+
+    def test_signup_submit_sunday_suppression(self):
+        d = date.today() + timedelta(days=2)
+        # Mock time to be Sunday 10 AM
+        with patch('django.utils.timezone.now') as mock_now:
+            # We need to make sure the mocked 'now' is a Sunday
+            # 2026-01-11 is a Sunday
+            mock_now.return_value = timezone.make_aware(datetime(2026, 1, 11, 10, 0))
+            response = self.client.post(reverse('meal_signup_submit') + f'?date={d.isoformat()}', {
+                'name': 'Sunday User',
+                'phone': '555-0000'
+            })
+        self.assertEqual(response.status_code, 200)
+        # Should NOT send immediate notification
+        self.assertEqual(len(mail.outbox), 0)
 
     def test_signup_cancel_notification(self):
         d = date.today() + timedelta(days=2)

@@ -3,6 +3,7 @@ from django.http import HttpResponse
 from django.core.mail import send_mail, EmailMultiAlternatives
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.utils import timezone
 from .models import MealSignUp
 import calendar
 from datetime import date, timedelta
@@ -83,7 +84,11 @@ def meal_signup_submit(request):
         
         # Immediate notification for changes in the current week
         today = date.today()
-        if today <= d <= today + timedelta(days=7):
+        # Suppress emails on Sundays before 3 PM (Church hours)
+        now = timezone.localtime(timezone.now())
+        is_sunday_morning = now.weekday() == 6 and now.hour < 15
+        
+        if today <= d <= today + timedelta(days=7) and not is_sunday_morning:
             subject = 'Missionary Meal Cancelled'
             text_content = f'The meal appointment for {d} has been cancelled.'
             html_content = render_to_string('meals/emails/missionary_update.html', {
@@ -109,7 +114,11 @@ def meal_signup_submit(request):
     
     # Immediate notification for changes in the current week
     today = date.today()
-    if today <= d <= today + timedelta(days=7):
+    # Suppress emails on Sundays before 3 PM (Church hours)
+    now = timezone.localtime(timezone.now())
+    is_sunday_morning = now.weekday() == 6 and now.hour < 15
+
+    if today <= d <= today + timedelta(days=7) and not is_sunday_morning:
         status = "marked as unavailable" if is_unavailable else f"signed up by {name} ({phone})"
         subject = 'Missionary Meal Update'
         text_content = f'An appointment for {d} has been updated: {status}'
