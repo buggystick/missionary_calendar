@@ -84,8 +84,10 @@ DATABASES = {
         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
         conn_max_age=600,
         conn_health_checks=True,
-    )
+    ),
+    'legacy': dj_database_url.parse("postgres://dareed@localhost:5432/legacy_restore"),
 }
+
 
 
 # Password validation
