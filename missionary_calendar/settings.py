@@ -84,8 +84,7 @@ DATABASES = {
         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
         conn_max_age=600,
         conn_health_checks=True,
-    ),
-    'legacy': dj_database_url.parse("postgres://dareed@localhost:5432/legacy_restore"),
+    )
 }
 
 
@@ -145,3 +144,5 @@ EMAIL_FILE_PATH = os.environ.get('DJANGO_EMAIL_FILE_PATH', BASE_DIR / 'sent_emai
 
 # Missionary Notification Settings
 MISSIONARY_EMAIL = os.environ.get('MISSIONARY_EMAIL', 'missionaries@example.com')
+ADMIN_BCC_EMAIL = os.environ.get('ADMIN_BCC_EMAIL')
+POSTMARK_MESSAGE_STREAM = os.environ.get('POSTMARK_MESSAGE_STREAM', 'notifications')

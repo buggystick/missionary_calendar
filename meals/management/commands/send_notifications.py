@@ -34,7 +34,9 @@ class Command(BaseCommand):
                 'name': signup.name,
                 'date': tomorrow,
             })
-            msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [signup.email])
+            bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
+            headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
+            msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [signup.email], bcc=bcc, headers=headers)
             msg.attach_alternative(html_content, "text/html")
             msg.send(fail_silently=False)
 
@@ -94,7 +96,9 @@ class Command(BaseCommand):
             })
             
             subject = 'Weekly Missionary Meal Summary'
-            msg = EmailMultiAlternatives(subject, summary_text, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL])
+            bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
+            headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
+            msg = EmailMultiAlternatives(subject, summary_text, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL], bcc=bcc, headers=headers)
             msg.attach_alternative(html_content, "text/html")
             msg.send(fail_silently=False)
 
@@ -112,7 +116,9 @@ class Command(BaseCommand):
             'name': 'Test User',
             'date': test_date,
         })
-        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [test_email])
+        bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
+        headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
+        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [test_email], bcc=bcc, headers=headers)
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 
@@ -131,7 +137,9 @@ class Command(BaseCommand):
             'cancelled': False,
             'calendar_url': 'http://localhost:8000/'
         })
-        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL])
+        bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
+        headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
+        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL], bcc=bcc, headers=headers)
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 
@@ -146,7 +154,9 @@ class Command(BaseCommand):
             'cancelled': True,
             'calendar_url': 'http://localhost:8000/'
         })
-        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL])
+        bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
+        headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
+        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL], bcc=bcc, headers=headers)
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 
@@ -167,7 +177,9 @@ class Command(BaseCommand):
             'schedule': schedule_data,
             'calendar_url': 'http://localhost:8000/'
         })
-        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL])
+        bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
+        headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
+        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL], bcc=bcc, headers=headers)
         msg.attach_alternative(html_content, "text/html")
         msg.send()
 

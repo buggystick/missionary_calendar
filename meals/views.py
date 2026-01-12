@@ -96,7 +96,9 @@ def meal_signup_submit(request):
                 'cancelled': True,
                 'calendar_url': request.build_absolute_uri('/')
             })
-            msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL])
+            bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
+            headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
+            msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL], bcc=bcc, headers=headers)
             msg.attach_alternative(html_content, "text/html")
             msg.send(fail_silently=True)
             
@@ -131,7 +133,9 @@ def meal_signup_submit(request):
             'cancelled': False,
             'calendar_url': request.build_absolute_uri('/')
         })
-        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL])
+        bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
+        headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
+        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL], bcc=bcc, headers=headers)
         msg.attach_alternative(html_content, "text/html")
         msg.send(fail_silently=True)
     
