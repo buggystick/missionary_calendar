@@ -83,6 +83,38 @@
             position: relative;
             cursor: pointer;
         }
+
+        /* Mobile Adjustments */
+        @media (max-width: 600px) {
+            body {
+                padding: 0.5em;
+            }
+            .month-nav a {
+                padding: 0.5em;
+                margin: 0 0.2em;
+                font-size: 0.9rem;
+            }
+            td {
+                height: 80px;
+                font-size: 0.8em;
+            }
+            th {
+                font-size: 0.8em;
+                padding: 4px 0;
+            }
+            .date-num {
+                margin-top: 2px;
+            }
+            .signed-up .status-text {
+                font-size: 0.85em;
+                display: block;
+                margin-top: 2px;
+            }
+            .information-banner {
+                font-size: 0.9em;
+                padding: 0.5em;
+            }
+        }
         td:hover {
             background-color: #f0f0f0;
         }
