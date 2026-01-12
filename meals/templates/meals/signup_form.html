@@ -82,6 +82,15 @@ function validateForm() {
     return true;
 }
 
+document.getElementById('id_phone').addEventListener('input', function (e) {
+    let x = e.target.value.replace(/\D/g, '').match(/(\d{0,3})(\d{0,3})(\d{0,4})/);
+    if (!x[2]) {
+        e.target.value = x[1];
+    } else {
+        e.target.value = '(' + x[1] + ') ' + x[2] + (x[3] ? '-' + x[3] : '');
+    }
+});
+
 document.getElementById('signup-form').addEventListener('submit', function(e) {
     if (!validateForm()) {
         e.preventDefault();
