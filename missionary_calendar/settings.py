@@ -27,7 +27,7 @@ SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-(_hylx4qgt10$9
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',')
+ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1,.herokuapp.com').split(',')
 if '' in ALLOWED_HOSTS:
     ALLOWED_HOSTS.remove('')
 
@@ -84,8 +84,10 @@ DATABASES = {
         default=f'sqlite:///{BASE_DIR / "db.sqlite3"}',
         conn_max_age=600,
         conn_health_checks=True,
-    )
+    ),
+    'legacy': dj_database_url.parse("postgres://dareed@localhost:5432/legacy_restore"),
 }
+
 
 
 # Password validation
