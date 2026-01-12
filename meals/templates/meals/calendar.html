@@ -20,6 +20,14 @@
             text-align: center;
             font-weight: bold;
         }
+        .qr-code-container {
+            text-align: center;
+            margin: 1em 0;
+        }
+        .qr-code-container img {
+            max-width: 150px;
+            height: auto;
+        }
         h1 {
             text-align: center;
             margin: 0.5em 0;
@@ -190,10 +198,12 @@
     </style>
 </head>
 <body>
-    <div class="information-banner">
-        Sign up to feed the missionaries!
+
+    <h1>Farmington/Murray Hill Wards Missionary Meal Calendar</h1>
+
+    <div class="qr-code-container">
+        <img src="{% static 'meals/qr_code.png' %}" alt="QR Code">
     </div>
-    <h1>Missionary Meal Calendar</h1>
 
     <div class="month-nav">
         {% if nav_link %}
