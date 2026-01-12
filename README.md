@@ -73,9 +73,29 @@ Automated reminders and summaries are handled by a management command:
 python manage.py send_notifications
 ```
 
-### Scheduling
-- **Local**: Use `cron` or run manually for testing.
-- **Heroku**: Use the **Heroku Scheduler** add-on to run this command daily.
+### Manual Testing
+You can manually test the appearance of all email types (Reminders, Updates, and Summaries) by running the command with the `--test` flag:
+```bash
+python manage.py send_notifications --test
+```
+This will send sample versions of all emails to your configured `MISSIONARY_EMAIL`.
+
+### Scheduling on Heroku
+To automate these emails on Heroku, use the **Heroku Scheduler** add-on:
+
+1. **Install the Add-on**:
+   ```bash
+   heroku addons:create scheduler:standard
+   ```
+2. **Open the Scheduler Dashboard**:
+   ```bash
+   heroku addons:open scheduler
+   ```
+3. **Add a New Job**:
+   - **Command**: `python manage.py send_notifications`
+   - **Frequency**: Daily
+   - **Time**: Select your preferred evening time (e.g., 6:00 PM or 00:00 UTC).
+4. **Save**: The command will now run once a day, sending reminders and (on Sundays) the weekly summary.
 
 ## Deployment to Heroku
 
