@@ -1,11 +1,12 @@
 from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
-from django.core.mail import send_mail, EmailMultiAlternatives
-from django.template.loader import render_to_string
 from django.conf import settings
 from django.utils import timezone
 from .models import MealSignUp
-from .utils import format_phone_number, is_valid_phone_number
+from .utils import (
+    format_phone_number, is_valid_phone_number, 
+    send_missionary_update
+)
 import calendar
 from datetime import date, timedelta
 
@@ -101,18 +102,12 @@ def meal_signup_submit(request):
         is_sunday_morning = now.weekday() == 6 and now.hour < 15
         
         if today <= d <= today + timedelta(days=7) and not is_sunday_morning:
-            subject = 'Missionary Meal Cancelled'
-            text_content = f'The meal appointment for {d} has been cancelled.'
-            html_content = render_to_string('meals/emails/missionary_update.html', {
-                'date': d,
-                'cancelled': True,
-                'calendar_url': request.build_absolute_uri('/')
-            })
-            bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
-            headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
-            msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL], bcc=bcc, headers=headers)
-            msg.attach_alternative(html_content, "text/html")
-            msg.send(fail_silently=True)
+            send_missionary_update(
+                date=d,
+                status='cancelled',
+                cancelled=True,
+                calendar_url=request.build_absolute_uri('/')
+            )
             
         return render(request, 'meals/signup_cell.html', {'signup': None, 'date': d})
 
@@ -134,21 +129,14 @@ def meal_signup_submit(request):
 
     if today <= d <= today + timedelta(days=7) and not is_sunday_morning:
         status = "marked as unavailable" if is_unavailable else f"signed up by {name} ({phone})"
-        subject = 'Missionary Meal Update'
-        text_content = f'An appointment for {d} has been updated: {status}'
-        html_content = render_to_string('meals/emails/missionary_update.html', {
-            'date': d,
-            'status': status,
-            'name': name if not is_unavailable else '',
-            'phone': phone if not is_unavailable else '',
-            'email': email if not is_unavailable else '',
-            'cancelled': False,
-            'calendar_url': request.build_absolute_uri('/')
-        })
-        bcc = [settings.ADMIN_BCC_EMAIL] if settings.ADMIN_BCC_EMAIL else []
-        headers = {'X-PM-Message-Stream': settings.POSTMARK_MESSAGE_STREAM}
-        msg = EmailMultiAlternatives(subject, text_content, settings.DEFAULT_FROM_EMAIL, [settings.MISSIONARY_EMAIL], bcc=bcc, headers=headers)
-        msg.attach_alternative(html_content, "text/html")
-        msg.send(fail_silently=True)
+        send_missionary_update(
+            date=d,
+            status=status,
+            name=name if not is_unavailable else '',
+            phone=phone if not is_unavailable else '',
+            email=email if not is_unavailable else '',
+            cancelled=False,
+            calendar_url=request.build_absolute_uri('/')
+        )
     
     return render(request, 'meals/signup_cell.html', {'signup': signup})
