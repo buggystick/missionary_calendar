@@ -65,7 +65,9 @@ def send_missionary_update(date, status, name='', phone='', email='', cancelled=
     msg.attach_alternative(html_content, "text/html")
     msg.send(fail_silently=True)
 
-def send_weekly_summary(today, calendar_url='https://missionaries.farmingtonward.church'):
+def send_weekly_summary(today, calendar_url=None):
+    if calendar_url is None:
+        calendar_url = settings.CALENDAR_EXTERNAL_URL
     # Get signups for 14 days, starting from the most recent Sunday
     # weekday() returns 0 for Monday, 6 for Sunday
     # If today is Sunday, we start from today.
