@@ -30,6 +30,7 @@ staticfiles/
 
 # IDEs
 .idea/
+/.junie/
 .vscode/
 *.swp
 *.swo

@@ -27,14 +27,13 @@
 
     <div class="modal-buttons">
         <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
-        {% if signup.is_unavailable %}
-            <button type="button" class="btn-save" onclick="markAvailable()">Make Available</button>
-        {% elif signup %}
+        <button type="button" class="btn-save" id="btn-make-available" style="{% if not signup.is_unavailable %}display:none{% endif %}" onclick="markAvailable()">Make Available</button>
+        <button type="submit" class="btn-save" id="btn-save" style="{% if signup.is_unavailable %}display:none{% endif %}">Save</button>
+        
+        {% if signup and not signup.is_unavailable %}
             <button type="button" style="background: #f44336; color: white; border: none; border-radius: 4px; margin-right: 0.5em; padding: 0.5em 1em; cursor: pointer;" onclick="deleteAppointment()">Delete Appointment</button>
-            <button type="submit" class="btn-save">Save</button>
-        {% else %}
+        {% elif not signup %}
             <button type="button" style="background: #607D8B; color: white; border: none; border-radius: 4px; margin-right: 0.5em; padding: 0.5em 1em; cursor: pointer;" onclick="markUnavailable()">Unavailable</button>
-            <button type="submit" class="btn-save">Save</button>
         {% endif %}
     </div>
 </form>
@@ -45,7 +44,7 @@ function deleteAppointment() {
         document.getElementById('id_name').value = '';
         document.getElementById('id_phone').value = '';
         document.getElementById('id_email').value = '';
-        document.getElementById('id_is_unavailable').value = '';
+        document.getElementById('id_is_unavailable').value = 'delete';
         document.getElementById('signup-form').requestSubmit();
     }
 }
@@ -56,8 +55,16 @@ function markUnavailable() {
 
 function markAvailable() {
     document.getElementById('id_is_unavailable').value = '';
-    // Submit immediately to clear the unavailable status and revert to default state
-    document.getElementById('signup-form').requestSubmit();
+    document.getElementById('signup-fields').style.display = 'block';
+    if (document.getElementById('unavailable-message')) {
+        document.getElementById('unavailable-message').style.display = 'none';
+    }
+    if (document.getElementById('btn-make-available')) {
+        document.getElementById('btn-make-available').style.display = 'none';
+    }
+    if (document.getElementById('btn-save')) {
+        document.getElementById('btn-save').style.display = 'inline-block';
+    }
 }
 
 function validateForm(event) {

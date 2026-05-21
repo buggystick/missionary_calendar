@@ -21,9 +21,12 @@ def get_calendar_context(year, month):
         week_days = []
         for d in week:
             if d.month == month:
+                signup = signups.get(d)
+                if signup is None and d.weekday() == 0:
+                    signup = MealSignUp(date=d, is_unavailable=True)
                 week_days.append({
                     'date': d,
-                    'signup': signups.get(d)
+                    'signup': signup
                 })
             else:
                 week_days.append({'date': None})
@@ -70,6 +73,8 @@ def meal_signup_form(request):
     date_str = request.GET.get('date')
     d = date.fromisoformat(date_str)
     signup = MealSignUp.objects.filter(date=d).first()
+    if signup is None and d.weekday() == 0:
+        signup = MealSignUp(date=d, is_unavailable=True)
     return render(request, 'meals/signup_form.html', {'date': d, 'signup': signup})
 
 def meal_signup_submit(request):
@@ -78,38 +83,44 @@ def meal_signup_submit(request):
     name = request.POST.get('name', '')
     phone = request.POST.get('phone', '')
     email = request.POST.get('email', '')
-    is_unavailable = request.POST.get('is_unavailable') == 'on'
+    is_unavailable_val = request.POST.get('is_unavailable')
+    is_unavailable = is_unavailable_val == 'on'
+    should_delete = is_unavailable_val == 'delete'
     
     if not is_unavailable and name and phone:
         if not is_valid_phone_number(phone):
-            # For simplicity, we'll just return the form again with an error message.
-            # However, since this is called via htmx and might need to handle errors,
-            # we should ideally return a 400 or something, but let's see how the form handles it.
-            # Actually, the current form doesn't show errors nicely.
-            # Let's just format it if it's somewhat valid, or keep it as is if it's totally garbage but let the client-side handle the strict validation.
             pass
         else:
             phone = format_phone_number(phone)
     
     if not is_unavailable and not name and not phone:
-        # If it's not unavailable and name/phone are empty, we revert to default (delete)
-        MealSignUp.objects.filter(date=d).delete()
-        
-        # Immediate notification for changes in the current week
-        today = date.today()
-        # Suppress emails on Sundays before 3 PM (Church hours)
-        now = timezone.localtime(timezone.now())
-        is_sunday_morning = now.weekday() == 6 and now.hour < 15
-        
-        if today <= d <= today + timedelta(days=7) and not is_sunday_morning:
-            send_missionary_update(
-                date=d,
-                status='cancelled',
-                cancelled=True,
-                calendar_url=request.build_absolute_uri('/')
-            )
+        if should_delete or d.weekday() != 0:
+            # If it's not unavailable and name/phone are empty, we revert to default (delete)
+            # EXCEPT for Mondays, where "revert" means go back to default Unavailable, 
+            # while an empty save should make it explicitly Available.
+            MealSignUp.objects.filter(date=d).delete()
             
-        return render(request, 'meals/signup_cell.html', {'signup': None, 'date': d})
+            # Immediate notification for changes in the current week
+            today = date.today()
+            # Suppress emails on Sundays before 3 PM (Church hours)
+            now = timezone.localtime(timezone.now())
+            is_sunday_morning = now.weekday() == 6 and now.hour < 15
+            
+            if today <= d <= today + timedelta(days=7) and not is_sunday_morning:
+                send_missionary_update(
+                    date=d,
+                    status='cancelled',
+                    cancelled=True,
+                    calendar_url=request.build_absolute_uri('/')
+                )
+                
+            signup = None
+            if d.weekday() == 0:
+                signup = MealSignUp(date=d, is_unavailable=True)
+            return render(request, 'meals/signup_cell.html', {'signup': signup, 'date': d})
+        else:
+            # It's a Monday and we want to explicitly make it available (no name/phone)
+            pass
 
     signup, created = MealSignUp.objects.update_or_create(
         date=d,
@@ -128,7 +139,13 @@ def meal_signup_submit(request):
     is_sunday_morning = now.weekday() == 6 and now.hour < 15
 
     if today <= d <= today + timedelta(days=7) and not is_sunday_morning:
-        status = "marked as unavailable" if is_unavailable else f"signed up by {name} ({phone})"
+        if is_unavailable:
+            status = "marked as unavailable"
+        elif name:
+            status = f"signed up by {name} ({phone})"
+        else:
+            status = "marked as available"
+            
         send_missionary_update(
             date=d,
             status=status,

@@ -12,6 +12,6 @@
     var cell = document.getElementById('cell-{% if signup %}{{ signup.date|date:"Y-m-d" }}{% else %}{{ date|date:"Y-m-d" }}{% endif %}');
     cell.classList.remove('signed-up', 'unavailable');
     {% if signup %}
-        cell.classList.add('{% if signup.is_unavailable %}unavailable{% else %}signed-up{% endif %}');
+        cell.classList.add('{% if signup.is_unavailable %}unavailable{% elif signup.name %}signed-up{% endif %}');
     {% endif %}
 </script>

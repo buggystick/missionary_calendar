@@ -239,7 +239,7 @@
                                             hx-target="#modal-content"
                                             hx-trigger="click"
                                             onclick="document.getElementById('modal-overlay').style.display='flex'"
-                                            class="{% if day.signup %}{% if day.signup.is_unavailable %}unavailable{% else %}signed-up{% endif %}{% endif %}"
+                                            class="{% if day.signup %}{% if day.signup.is_unavailable %}unavailable{% elif day.signup.name %}signed-up{% endif %}{% endif %}"
                                             id="cell-{{ day.date|date:'Y-m-d' }}"
                                         {% endif %}
                                     {% endif %}
