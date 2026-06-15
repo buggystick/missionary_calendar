@@ -51,6 +51,20 @@ python manage.py runserver
 ```
 Visit `http://127.0.0.1:8000` in your browser.
 
+## QR Code
+
+The calendar page displays a QR code image above the calendar. To use your own QR code, replace the file at:
+
+```
+meals/static/meals/qr_code.png
+```
+
+This image should be a PNG file containing a QR code that links to your deployed calendar URL. After replacing the file, if you are running in production, be sure to re-run `collectstatic`:
+
+```bash
+python manage.py collectstatic --noinput
+```
+
 ## Unavailable Days
 
 By default, all days are available on the calendar. You can mark specific days as unavailable via the `UNAVAILABLE_DAYS` environment variable.
