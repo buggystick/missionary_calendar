@@ -68,6 +68,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'meals.context_processors.ward_title',
             ],
         },
     },
@@ -147,3 +148,6 @@ MISSIONARY_EMAIL = os.environ.get('MISSIONARY_EMAIL', 'missionaries@example.com'
 ADMIN_BCC_EMAIL = os.environ.get('ADMIN_BCC_EMAIL')
 POSTMARK_MESSAGE_STREAM = os.environ.get('POSTMARK_MESSAGE_STREAM', 'notifications')
 CALENDAR_EXTERNAL_URL = os.environ.get('CALENDAR_EXTERNAL_URL', 'https://missionaries.farmingtonward.church')
+
+# Ward Title
+WARD_TITLE = os.environ.get('WARD_TITLE', 'Ward')

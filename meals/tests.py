@@ -31,7 +31,7 @@ class MealsViewsTest(TestCase):
     def test_calendar_view(self):
         response = self.client.get(reverse('calendar'))
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Missionary Meal Calendar")
+        self.assertContains(response, "Ward Missionary Meal Calendar")
         # Should have "Next Month" link
         self.assertContains(response, "Next Month")
         # Should NOT have "Previous Month" link

@@ -1,6 +1,6 @@
 # Missionary Meal Calendar
 
-A Django-based clone of the Missionary Meal Calendar, designed for ward members to sign up to feed missionaries. Built with Django and HTMX for a modern, responsive user experience.
+A Django-based missionary meal calendar, designed for ward members to sign up to feed missionaries. Built with Django and HTMX for a modern, responsive user experience.
 
 ## Features
 
@@ -18,7 +18,7 @@ A Django-based clone of the Missionary Meal Calendar, designed for ward members 
 - **Backend**: Django 6.0+
 - **Frontend**: HTML5, CSS3, HTMX 2.0
 - **Database**: SQLite (Local), PostgreSQL (Production)
-- **Deployment**: Heroku
+- **Deployment**: Heroku (but others can be used)
 - **Emails**: Postmark (Production), Mailtrap (Testing)
 
 ## Local Development Setup
@@ -80,7 +80,17 @@ python manage.py send_notifications --test
 ```
 This will send sample versions of all emails to your configured `MISSIONARY_EMAIL`.
 
-### Scheduling on Heroku
+## Deployment to Heroku
+
+1. Create a Heroku app: `heroku create your-app-name`
+2. Add Postgres: `heroku addons:create heroku-postgresql:essential-0`
+3. Set your environment variables: `heroku config:set DJANGO_SECRET_KEY=...` (see `.env.example`)
+4. Push to Heroku: `git push heroku main`
+5. Run migrations: `heroku run python manage.py migrate`
+6. Set up the Heroku Scheduler for the `send_notifications` command.
+
+### Scheduling emails
+Emails need to be sent by using some sort of cron job.
 To automate these emails on Heroku, use the **Heroku Scheduler** add-on:
 
 1. **Install the Add-on**:
@@ -97,14 +107,6 @@ To automate these emails on Heroku, use the **Heroku Scheduler** add-on:
    - **Time**: Select your preferred evening time (e.g., 6:00 PM or 00:00 UTC).
 4. **Save**: The command will now run once a day, sending reminders and (on Sundays) the weekly summary.
 
-## Deployment to Heroku
-
-1. Create a Heroku app: `heroku create your-app-name`
-2. Add Postgres: `heroku addons:create heroku-postgresql:essential-0`
-3. Set your environment variables: `heroku config:set DJANGO_SECRET_KEY=...` (see `.env.example`)
-4. Push to Heroku: `git push heroku main`
-5. Run migrations: `heroku run python manage.py migrate`
-6. Set up the Heroku Scheduler for the `send_notifications` command.
 
 ## License
 MIT
