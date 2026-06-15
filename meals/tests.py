@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 from django.core import mail
 from .models import MealSignUp
@@ -8,7 +8,95 @@ from datetime import date, timedelta, datetime
 import calendar
 from django.core.management import call_command
 from io import StringIO
-from .utils import format_phone_number, is_valid_phone_number
+from .utils import format_phone_number, is_valid_phone_number, is_default_unavailable, _week_of_month
+
+class UnavailableDaysTest(TestCase):
+    @override_settings(UNAVAILABLE_DAYS='mon')
+    def test_every_monday(self):
+        # 2026-06-15 is a Monday
+        self.assertTrue(is_default_unavailable(date(2026, 6, 15)))
+        # 2026-06-16 is a Tuesday
+        self.assertFalse(is_default_unavailable(date(2026, 6, 16)))
+
+    @override_settings(UNAVAILABLE_DAYS='mon,fri')
+    def test_multiple_days(self):
+        self.assertTrue(is_default_unavailable(date(2026, 6, 15)))   # Monday
+        self.assertTrue(is_default_unavailable(date(2026, 6, 19)))   # Friday
+        self.assertFalse(is_default_unavailable(date(2026, 6, 17)))  # Wednesday
+
+    @override_settings(UNAVAILABLE_DAYS='')
+    def test_empty_means_none(self):
+        self.assertFalse(is_default_unavailable(date(2026, 6, 15)))  # Monday
+
+    @override_settings(UNAVAILABLE_DAYS='mon:1/3')
+    def test_specific_weeks(self):
+        # June 2026: 1st starts on Monday
+        # Week 1 Monday = June 1
+        self.assertTrue(is_default_unavailable(date(2026, 6, 1)))
+        # Week 2 Monday = June 8
+        self.assertFalse(is_default_unavailable(date(2026, 6, 8)))
+        # Week 3 Monday = June 15
+        self.assertTrue(is_default_unavailable(date(2026, 6, 15)))
+        # Week 4 Monday = June 22
+        self.assertFalse(is_default_unavailable(date(2026, 6, 22)))
+
+    @override_settings(UNAVAILABLE_DAYS='mon:odd')
+    def test_odd_weeks(self):
+        self.assertTrue(is_default_unavailable(date(2026, 6, 1)))    # week 1
+        self.assertFalse(is_default_unavailable(date(2026, 6, 8)))   # week 2
+        self.assertTrue(is_default_unavailable(date(2026, 6, 15)))   # week 3
+
+    @override_settings(UNAVAILABLE_DAYS='mon:even')
+    def test_even_weeks(self):
+        self.assertFalse(is_default_unavailable(date(2026, 6, 1)))   # week 1
+        self.assertTrue(is_default_unavailable(date(2026, 6, 8)))    # week 2
+        self.assertFalse(is_default_unavailable(date(2026, 6, 15)))  # week 3
+        self.assertTrue(is_default_unavailable(date(2026, 6, 22)))   # week 4
+
+    def test_week_of_month(self):
+        # June 2026: June 1 is a Monday, so Sunday May 31 would be week boundary
+        # Week 1 contains June 1-6 (Mon-Sat), week starts on Sunday
+        self.assertEqual(_week_of_month(date(2026, 6, 1)), 1)
+        self.assertEqual(_week_of_month(date(2026, 6, 7)), 2)  # Sunday = new week
+        self.assertEqual(_week_of_month(date(2026, 6, 8)), 2)
+
+    @override_settings(UNAVAILABLE_DAYS='week:3/4/5')
+    def test_full_week_unavailable(self):
+        """Full weeks 3, 4, 5 should be unavailable for all days."""
+        # June 2026: week 1 = June 1-6, week 2 = June 7-13, week 3 = June 14-20
+        self.assertFalse(is_default_unavailable(date(2026, 6, 1)))   # week 1 Mon
+        self.assertFalse(is_default_unavailable(date(2026, 6, 10)))  # week 2 Wed
+        self.assertTrue(is_default_unavailable(date(2026, 6, 14)))   # week 3 Sun
+        self.assertTrue(is_default_unavailable(date(2026, 6, 17)))   # week 3 Wed
+        self.assertTrue(is_default_unavailable(date(2026, 6, 22)))   # week 4 Mon
+        self.assertTrue(is_default_unavailable(date(2026, 6, 29)))   # week 5 Mon
+
+    @override_settings(UNAVAILABLE_DAYS='week:odd')
+    def test_full_week_odd(self):
+        self.assertTrue(is_default_unavailable(date(2026, 6, 3)))    # week 1 Wed
+        self.assertFalse(is_default_unavailable(date(2026, 6, 10)))  # week 2 Wed
+        self.assertTrue(is_default_unavailable(date(2026, 6, 17)))   # week 3 Wed
+
+    @override_settings(UNAVAILABLE_DAYS='mon,week:3/4/5')
+    def test_day_and_week_combined(self):
+        """Mondays always unavailable + full weeks 3-5 unavailable."""
+        self.assertTrue(is_default_unavailable(date(2026, 6, 1)))    # week 1 Mon (day rule)
+        self.assertFalse(is_default_unavailable(date(2026, 6, 3)))   # week 1 Wed (no rule)
+        self.assertTrue(is_default_unavailable(date(2026, 6, 17)))   # week 3 Wed (week rule)
+        self.assertTrue(is_default_unavailable(date(2026, 6, 22)))   # week 4 Mon (both rules)
+
+    @override_settings(UNAVAILABLE_DAYS='tues')
+    def test_alternate_day_names(self):
+        """Longer day name variants like 'tues' should work."""
+        self.assertTrue(is_default_unavailable(date(2026, 6, 16)))   # Tuesday
+        self.assertFalse(is_default_unavailable(date(2026, 6, 15)))  # Monday
+
+    @override_settings(UNAVAILABLE_DAYS='tue')
+    def test_calendar_view_uses_setting(self):
+        """Calendar view should mark Tuesdays (not Mondays) as unavailable."""
+        response = self.client.get(reverse('calendar'))
+        self.assertEqual(response.status_code, 200)
+
 
 class PhoneUtilityTest(TestCase):
     def test_phone_formatting(self):

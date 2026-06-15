@@ -151,3 +151,17 @@ CALENDAR_EXTERNAL_URL = os.environ.get('CALENDAR_EXTERNAL_URL', 'https://mission
 
 # Ward Title
 WARD_TITLE = os.environ.get('WARD_TITLE', 'Ward')
+
+# Unavailable Days Configuration
+# Comma-separated rules for days that are unavailable by default.
+# Supports day names (mon,tue,wed,thu,fri,sat,sun) and week-of-month
+# qualifiers using "/" to list week numbers
+# (e.g. "mon:1/3" = Mondays in weeks 1 & 3 of the month).
+# Examples:
+#   "mon"           -> every Monday
+#   "mon,fri"       -> every Monday and Friday
+#   "mon:1/3"       -> Mondays in the 1st and 3rd weeks of the month
+#   "mon:even"      -> Mondays in even weeks (2nd, 4th)
+#   "mon:odd"       -> Mondays in odd weeks (1st, 3rd, 5th)
+#   "mon,tue:2/4"   -> every Monday + Tuesdays in weeks 2 & 4
+UNAVAILABLE_DAYS = os.environ.get('UNAVAILABLE_DAYS', '')

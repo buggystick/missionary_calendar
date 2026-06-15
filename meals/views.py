@@ -5,7 +5,7 @@ from django.utils import timezone
 from .models import MealSignUp
 from .utils import (
     format_phone_number, is_valid_phone_number, 
-    send_missionary_update
+    send_missionary_update, is_default_unavailable
 )
 import calendar
 from datetime import date, timedelta
@@ -22,7 +22,7 @@ def get_calendar_context(year, month):
         for d in week:
             if d.month == month:
                 signup = signups.get(d)
-                if signup is None and d.weekday() == 0:
+                if signup is None and is_default_unavailable(d):
                     signup = MealSignUp(date=d, is_unavailable=True)
                 week_days.append({
                     'date': d,
@@ -73,7 +73,7 @@ def meal_signup_form(request):
     date_str = request.GET.get('date')
     d = date.fromisoformat(date_str)
     signup = MealSignUp.objects.filter(date=d).first()
-    if signup is None and d.weekday() == 0:
+    if signup is None and is_default_unavailable(d):
         signup = MealSignUp(date=d, is_unavailable=True)
     return render(request, 'meals/signup_form.html', {'date': d, 'signup': signup})
 
@@ -94,9 +94,9 @@ def meal_signup_submit(request):
             phone = format_phone_number(phone)
     
     if not is_unavailable and not name and not phone:
-        if should_delete or d.weekday() != 0:
+        if should_delete or not is_default_unavailable(d):
             # If it's not unavailable and name/phone are empty, we revert to default (delete)
-            # EXCEPT for Mondays, where "revert" means go back to default Unavailable, 
+            # EXCEPT for default-unavailable days, where "revert" means go back to Unavailable,
             # while an empty save should make it explicitly Available.
             MealSignUp.objects.filter(date=d).delete()
             
@@ -115,11 +115,11 @@ def meal_signup_submit(request):
                 )
                 
             signup = None
-            if d.weekday() == 0:
+            if is_default_unavailable(d):
                 signup = MealSignUp(date=d, is_unavailable=True)
             return render(request, 'meals/signup_cell.html', {'signup': signup, 'date': d})
         else:
-            # It's a Monday and we want to explicitly make it available (no name/phone)
+            # It's a default-unavailable day and we want to explicitly make it available (no name/phone)
             pass
 
     signup, created = MealSignUp.objects.update_or_create(
